@@ -13,7 +13,7 @@
                 "San Diego County, CA (live, about 1.5 s, no freshness signal at all)",
                 "Duval County, FL (live, about 2 s by parcel id, values are one assessment year behind)",
                 "Cook County, IL (live, about 3 s, data one day old, three assessment stages per year)",
-                "Travis County, TX (not implemented yet, no live endpoint exists)"
+                "Travis County, TX (no live endpoint exists; answered from an index of the certified roll, freshest values of the four)"
             ],
             "default": "san-diego-ca"
         },
@@ -29,7 +29,7 @@
         "query": {
             "title": "Parcel identifier or address",
             "type": "string",
-            "description": "The parcel identifier or the street address.\n\nThere is no national parcel identifier and no per-state one either, so this field cannot be validated beyond 'not empty'. Real examples, one per county: San Diego 3532803300 (ten digits), Duval 0991354355R (ten digits and a letter), Cook 29352110190000 (fourteen digits), Travis 107422 (six digits). Two counties in the same state do not necessarily agree: another Florida county writes 07702-000-000.\n\nFor an address, give as much as you have, for example '7519 Caravaca Ct, Jacksonville, FL 32244'. An address that names a building rather than a single parcel, such as a condominium tower, returns every unit and says so in the flags.",
+            "description": "The parcel identifier or the street address.\n\nThere is no national parcel identifier and no per-state one either, so this field cannot be validated beyond 'not empty'. Real examples, one per county: San Diego 3532803300 (ten digits), Duval 0991354355R (ten digits and a letter), Cook 29352110190000 (fourteen digits), Travis 100008 (padded to twelve in the export, type it without the padding). Two counties in the same state do not necessarily agree: another Florida county writes 07702-000-000.\n\nFor an address, give as much as you have, for example '7519 Caravaca Ct, Jacksonville, FL 32244'. An address that names a building rather than a single parcel, such as a condominium tower, returns every unit and says so in the flags.",
             "editor": "textfield",
             "prefill": "3532803300"
         },

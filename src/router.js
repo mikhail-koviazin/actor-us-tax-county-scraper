@@ -10,18 +10,18 @@
 import * as cook from './adapters/cook.js';
 import * as duval from './adapters/duval.js';
 import * as sanDiego from './adapters/san-diego.js';
+import * as travis from './adapters/travis.js';
 import { buildUnsupported, JURISDICTIONS } from './record.js';
 
 const ADAPTERS = {
     [sanDiego.id]: sanDiego,
     [duval.id]: duval,
     [cook.id]: cook,
+    [travis.id]: travis,
 };
 
 /** Known to the contract, no adapter yet. Named so the answer is not "no such county". */
-const PLANNED = {
-    'travis-tx': 'Bulk export only, no live endpoint. Answers require a pre-built index.',
-};
+const PLANNED = {};
 
 export const jurisdictions = () => Object.keys(JURISDICTIONS);
 

@@ -15,7 +15,13 @@ The reconnaissance behind every design decision here, with measured timings and 
 | Cook, IL      | Socrata open data portal    | yes, 6 in parallel | yes, 1 then 6 per parcel   | yes    |
 | Travis, TX    | bulk export                 | not implemented    | not implemented            | **no** |
 
-Travis answers `unsupported_lookup` naming what it will support, rather than an error, so a caller can act on the reply.
+Travis is the one that breaks the shape. It publishes no endpoint that answers a question about one parcel, so the Actor builds an index from the certified roll and serves from it: `source.live` is false, `as_of.basis` is the date the roll was posted rather than today, and every record carries `answered_from_index`. Lookups come back in about 35 ms, which is twenty times faster than the live counties and twenty times less current.
+
+Building it reads **129 MB of a 531 MB archive**. A ZIP keeps its table of contents at the end, so with HTTP Range you can learn every entry's offset and fetch only the one file you need; the largest thing in this archive is 207 MB of building sketches a parcel lookup never touches. The 531 MB inflates to 18.0 GB, and `PROP.TXT` alone is 4.9 GB, so nothing is ever held whole.
+
+```bash
+node bin/build-travis-index.js     # 129 MB fetched, 493,246 properties, about 25 s
+```
 
 Wall clock for a parcel id lookup runs about 1.5 to 3 seconds everywhere, but a single timing on these services is reproducible only to about a factor of five, so the request count is the honest column and the seconds are not.
 

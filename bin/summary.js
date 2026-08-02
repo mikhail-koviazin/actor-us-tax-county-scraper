@@ -17,7 +17,9 @@ const cases = [
     ['cook-il', 'parcel_id', '17052170040000', 'parcel that stopped existing in 2016'],
     ['cook-il', 'parcel_id', '33073170061016', 'condominium, different characteristics dataset'],
     ['cook-il', 'address', '18102 Dorchester Ave', 'address, one row per pin per year'],
-    ['travis-tx', 'address', '1 Congress Ave, Austin, TX', 'no live endpoint'],
+    ['travis-tx', 'parcel_id', '100008', 'answered from the index, not from a request'],
+    ['travis-tx', 'parcel_id', '988400', 'six undivided-interest owners'],
+    ['travis-tx', 'address', '1501 Barton Springs Rd', 'address, 63 parcels share it'],
 ];
 
 for (const [jurisdiction, lookupBy, query, label] of cases) {

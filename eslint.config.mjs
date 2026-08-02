@@ -8,9 +8,9 @@ export default [
     ...apify,
     prettier,
     {
-        // The scripts in bin/ are command line tools. Printing to stdout is their job,
+        // The scripts in bin/ and scripts/ are command line tools. Printing to stdout is their job,
         // and routing that through the Actor logger would defeat the point of having them.
-        files: ['bin/**/*.js'],
+        files: ['bin/**/*.js', 'scripts/**/*.mjs'],
         rules: { 'no-console': 'off' },
     },
 ];
