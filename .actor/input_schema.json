@@ -1,0 +1,46 @@
+{
+    "title": "US county property tax lookup",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "jurisdiction": {
+            "title": "County",
+            "type": "string",
+            "description": "Which county to ask. There is no auto-detection: resolving a county from an address is a separate problem, and guessing it wrong returns a confident answer about the wrong property. Each county is reached a completely different way, which affects how fast the answer comes and how fresh it is.",
+            "editor": "select",
+            "enum": ["san-diego-ca", "duval-fl", "cook-il", "travis-tx"],
+            "enumTitles": [
+                "San Diego County, CA (live, about 1.5 s, no freshness signal)",
+                "Duval County, FL (live, about 2 s by parcel id, values are one assessment year behind)",
+                "Cook County, IL (not implemented yet)",
+                "Travis County, TX (not implemented yet, no live endpoint exists)"
+            ],
+            "default": "san-diego-ca"
+        },
+        "lookupBy": {
+            "title": "Look up by",
+            "type": "string",
+            "description": "Whether the query is a parcel identifier or a street address. State it explicitly. It is never inferred from the shape of the string, because parcel identifiers have no common format and some of them look like house numbers.",
+            "editor": "select",
+            "enum": ["parcel_id", "address"],
+            "enumTitles": ["Parcel identifier", "Street address"],
+            "default": "parcel_id"
+        },
+        "query": {
+            "title": "Parcel identifier or address",
+            "type": "string",
+            "description": "The parcel identifier or the street address.\n\nThere is no national parcel identifier and no per-state one either, so this field cannot be validated beyond 'not empty'. Real examples, one per county: San Diego 3532803300 (ten digits), Duval 0991354355R (ten digits and a letter), Cook 29352110190000 (fourteen digits), Travis 107422 (six digits). Two counties in the same state do not necessarily agree: another Florida county writes 07702-000-000.\n\nFor an address, give as much as you have, for example '7519 Caravaca Ct, Jacksonville, FL 32244'. An address that names a building rather than a single parcel, such as a condominium tower, returns every unit and says so in the flags.",
+            "editor": "textfield",
+            "prefill": "3532803300"
+        },
+        "maxResults": {
+            "title": "Maximum records",
+            "type": "integer",
+            "description": "How many parcels to return at most. Address lookups are ambiguous by nature: a house number and a street name are not unique across a county of a million parcels, and one condominium address can be hundreds of parcels. When more matched than were returned, the record says so in result_set and flags results_truncated.",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 5
+        }
+    },
+    "required": ["jurisdiction", "query"]
+}

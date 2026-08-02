@@ -1,0 +1,31 @@
+{
+    "name": "actor-us-tax-county-scraper",
+    "version": "0.1.0",
+    "type": "module",
+    "description": "One parcel lookup across four US counties that publish the same data four different ways.",
+    "engines": {
+        "node": ">=20.0.0"
+    },
+    "dependencies": {
+        "apify": "^3.7.0"
+    },
+    "devDependencies": {
+        "@apify/eslint-config": "^2.0.0",
+        "eslint": "^9.29.0",
+        "eslint-config-prettier": "^10.1.5",
+        "prettier": "^3.5.3",
+        "vitest": "^4.1.0"
+    },
+    "scripts": {
+        "start": "node ./src/main.js",
+        "probe": "node ./bin/probe.js",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "lint": "eslint",
+        "lint:fix": "eslint --fix",
+        "test": "vitest run test/unit",
+        "test:live": "vitest run test/live"
+    },
+    "author": "Mikhail Koviazin",
+    "license": "ISC"
+}

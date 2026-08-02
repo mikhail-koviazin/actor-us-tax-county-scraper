@@ -1,0 +1,11 @@
+{
+    "$schema": "https://apify.com/schemas/v1/actor.ide.json",
+    "actorSpecification": 1,
+    "name": "actor-us-tax-county-scraper",
+    "title": "US county property tax lookup",
+    "description": "One parcel lookup across US counties that publish the same data completely different ways. Returns a normalized record that labels what each number means and flags what the caller has to know to avoid being wrong.",
+    "version": "0.1",
+    "buildTag": "latest",
+    "input": "./input_schema.json",
+    "dockerfile": "../Dockerfile"
+}
