@@ -9,3 +9,6 @@ storage
 
 # Added by Apify CLI
 .venv
+
+# The Travis index: 368 MB of derived data, rebuilt by bin/build-travis-index.js
+.travis-index

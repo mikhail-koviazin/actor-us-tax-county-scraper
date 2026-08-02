@@ -161,7 +161,7 @@ const propertyFrom = (r) => ({
  */
 export async function buildIndex({
     archiveUrl = DEFAULT_ARCHIVE,
-    outDir = 'storage/travis-index',
+    outDir = '.travis-index',
     limit = Infinity,
     onProgress = () => {},
 } = {}) {

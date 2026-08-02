@@ -11,6 +11,7 @@
     },
     "devDependencies": {
         "@apify/eslint-config": "^2.0.0",
+        "apify-cli": "^1.7.1",
         "eslint": "^9.29.0",
         "eslint-config-prettier": "^10.1.5",
         "prettier": "^3.5.3",

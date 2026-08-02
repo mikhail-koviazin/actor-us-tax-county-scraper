@@ -15,7 +15,7 @@ const args = process.argv.slice(2);
 const limitAt = args.indexOf('--limit');
 const limit = limitAt >= 0 ? Number(args[limitAt + 1]) : Infinity;
 const outAt = args.indexOf('--out');
-const outDir = outAt >= 0 ? args[outAt + 1] : 'storage/travis-index';
+const outDir = outAt >= 0 ? args[outAt + 1] : '.travis-index';
 
 const mb = (n) => `${(n / 1e6).toFixed(1)} MB`;
 const started = Date.now();

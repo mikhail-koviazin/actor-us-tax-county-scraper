@@ -28,7 +28,12 @@ export const id = 'travis-tx';
 export const mode = Mode.BULK_INDEX;
 export const supports = { parcel_id: true, address: true, live: false };
 
-const INDEX_DIR = process.env.TRAVIS_INDEX_DIR ?? 'storage/travis-index';
+/**
+ * Deliberately not under `storage/`. `apify run` purges the default local stores on every
+ * start, and an index that takes a minute to rebuild has no business living somewhere a
+ * routine command empties. On the platform this becomes a named key-value store.
+ */
+const INDEX_DIR = process.env.TRAVIS_INDEX_DIR ?? '.travis-index';
 
 /** Shards are read once and kept. A shard is roughly 5,000 properties. */
 const shardCache = new Map();
