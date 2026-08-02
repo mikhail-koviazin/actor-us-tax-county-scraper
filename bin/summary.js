@@ -13,7 +13,10 @@ const cases = [
     ['duval-fl', 'address', '7519 Caravaca Ct, Jacksonville, FL 32244', 'detached house'],
     ['duval-fl', 'address', '1431 Riverplace Blvd, Jacksonville, FL 32207', 'condo tower, 241 units'],
     ['duval-fl', 'address', '1 Nowhere Rd, Jacksonville, FL 32207', 'address that does not exist'],
-    ['cook-il', 'parcel_id', '29352110190000', 'no adapter yet'],
+    ['cook-il', 'parcel_id', '29352110190000', 'six datasets, newest year is empty'],
+    ['cook-il', 'parcel_id', '17052170040000', 'parcel that stopped existing in 2016'],
+    ['cook-il', 'parcel_id', '33073170061016', 'condominium, different characteristics dataset'],
+    ['cook-il', 'address', '18102 Dorchester Ave', 'address, one row per pin per year'],
     ['travis-tx', 'address', '1 Congress Ave, Austin, TX', 'no live endpoint'],
 ];
 
@@ -33,7 +36,9 @@ for (const [jurisdiction, lookupBy, query, label] of cases) {
             console.log(`    ${r.result}: ${(r.reason ?? r.failure?.detail ?? '').slice(0, 110)}`);
             continue;
         }
-        const headline = r.valuation?.amounts?.find((a) => a.basis === r.valuation.headline_basis);
+        const headline = r.valuation?.amounts?.find(
+            (a) => a.basis === r.valuation.headline_basis && a.stage === r.valuation.headline_stage,
+        );
         console.log(
             `    ${r.parcel_id}  ${(r.situs_address?.full ?? '').padEnd(30)}  ` +
                 `${r.valuation.headline_basis}=${headline?.amount ?? 'null'}  ` +

@@ -27,6 +27,8 @@ export const AsOfBasis = {
  * four different things by it and an agent asked to compare two of them will do it.
  */
 export const ValuationBasis = {
+    IL_FRACTIONAL_LAND: 'il_fractional_land',
+    IL_FRACTIONAL_BUILDING: 'il_fractional_building',
     IL_FRACTIONAL_ASSESSED: 'il_fractional_assessed',
     CA_PROP13_FACTORED: 'ca_prop13_factored',
     CA_LAND: 'ca_land',
@@ -42,6 +44,15 @@ export const ValuationBasis = {
     TX_ASSESSED_CAPPED: 'tx_assessed_capped',
 };
 
+/**
+ * Where in the appeal cycle an amount was taken.
+ *
+ * This belongs to the amount, not to the valuation. Cook publishes mailed, certified and
+ * board of review figures for the same parcel in the same year, and they diverge: one
+ * parcel in 2016 was mailed at 3041, certified at 3041, and cut to 1303 by the Board of
+ * Review. Three correct answers to "what is the assessed value", 57% apart, depending on
+ * where you stand. A single `stage` on the valuation object can only hold one of them.
+ */
 export const Stage = {
     MAILED: 'mailed',
     CERTIFIED: 'certified',
@@ -61,7 +72,10 @@ export const FLAG_NOTES = {
     parcel_not_current:
         'This parcel is absent from the current assessment year and was answered from historical data. It may no longer exist.',
     values_pending_for_year: 'The current year exists in the source but its values have not been published yet.',
-    fell_back_to_prior_year: 'Values are from an earlier assessment year than the one requested.',
+    fell_back_to_prior_year:
+        'The most recent assessment year carries no values, so the figures here are from an earlier year. The year they are from is in valuation.year.',
+    multiple_buildings:
+        'The parcel carries more than one improvement record. The characteristics describe one of them, and the count is in characteristics.building_records.',
     source_freshness_unknown:
         'The source publishes no update timestamp, so the age of this record cannot be established from the source itself.',
     answered_from_index:
@@ -91,6 +105,8 @@ export const FLAG_NOTES = {
         'This parcel shares its geometry with other parcels. Condominiums, possessory interests and mobile homes are stacked on the parent parcel.',
     not_assessable:
         "This record exists for the assessor's own record keeping and carries no assessment. It is not a taxable parcel.",
+    values_under_appeal:
+        'The mailed, certified and board of review figures for this year are not all the same, so the assessment changed during the appeal cycle. Which one is correct depends on the date the question is being asked about.',
 };
 
 export const JURISDICTIONS = {

@@ -144,7 +144,7 @@ const toRecord = (a, { endpoint, retrievedAt, extraFlags = [], resultSet = null 
     return buildRecord({
         parcelId: str(a.PARCEL_ID),
         jurisdiction: id,
-        source: { mode, endpoint, retrieved_at: retrievedAt, live: true },
+        source: { mode, endpoints: [endpoint], retrieved_at: retrievedAt, live: true },
         resultSet,
         // The rows are the only honest freshness signal this source has. The AGOL item
         // said 2026-07-08 and the layer said 2026-06-09 while the rows said 2025.
@@ -165,20 +165,21 @@ const toRecord = (a, { endpoint, retrievedAt, extraFlags = [], resultSet = null 
         },
         valuation: {
             year: num(a.ASMNT_YR),
-            stage: Stage.CERTIFIED,
             currency: 'USD',
             // Florida publishes the whole ladder and the gaps between the rungs are the
             // Save Our Homes cap and the exemptions. One number would throw away the
-            // part that explains the tax bill.
+            // part that explains the tax bill. The state receives the roll after the
+            // county has certified it, so every rung is at the same stage.
             amounts: [
-                { basis: ValuationBasis.FL_JUST_VALUE, amount: num(a.JV) },
-                { basis: ValuationBasis.FL_LAND_VALUE, amount: num(a.LND_VAL) },
-                { basis: ValuationBasis.FL_ASSESSED_SCHOOL, amount: num(a.AV_SD) },
-                { basis: ValuationBasis.FL_ASSESSED_NONSCHOOL, amount: num(a.AV_NSD) },
-                { basis: ValuationBasis.FL_TAXABLE_SCHOOL, amount: num(a.TV_SD) },
-                { basis: ValuationBasis.FL_TAXABLE_NONSCHOOL, amount: num(a.TV_NSD) },
+                { basis: ValuationBasis.FL_JUST_VALUE, stage: Stage.CERTIFIED, amount: num(a.JV) },
+                { basis: ValuationBasis.FL_LAND_VALUE, stage: Stage.CERTIFIED, amount: num(a.LND_VAL) },
+                { basis: ValuationBasis.FL_ASSESSED_SCHOOL, stage: Stage.CERTIFIED, amount: num(a.AV_SD) },
+                { basis: ValuationBasis.FL_ASSESSED_NONSCHOOL, stage: Stage.CERTIFIED, amount: num(a.AV_NSD) },
+                { basis: ValuationBasis.FL_TAXABLE_SCHOOL, stage: Stage.CERTIFIED, amount: num(a.TV_SD) },
+                { basis: ValuationBasis.FL_TAXABLE_NONSCHOOL, stage: Stage.CERTIFIED, amount: num(a.TV_NSD) },
             ],
             headline_basis: ValuationBasis.FL_JUST_VALUE,
+            headline_stage: Stage.CERTIFIED,
         },
         characteristics: {
             // Zero is null here: a house built in year 0 with 0 square feet is a gap.

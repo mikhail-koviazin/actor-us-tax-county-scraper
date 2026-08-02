@@ -204,6 +204,114 @@ describe('Duval, the Florida statewide layer', () => {
     );
 });
 
+describe('Cook, Socrata open data portal', () => {
+    it(
+        'joins six datasets into one record and does not report the empty newest year',
+        async () => {
+            const r = only(await lookup({ jurisdiction: 'cook-il', lookupBy: 'parcel_id', query: '29352110190000' }));
+
+            expect(r.parcel_id).toBe('29352110190000');
+            expect(r.situs_address.full).toBe('18102 DORCHESTER AVE');
+            expect(r.owner.names[0]).toMatch(/FEIKEMA/);
+            // Six requests, so one endpoint would not attribute the answer honestly.
+            expect(r.source.endpoints.length).toBe(6);
+
+            // The newest row exists with every value absent because that township has not
+            // been mailed yet. Taking it would report "no assessed value" for a normal house.
+            expect(r.flags).toContain('values_pending_for_year');
+            expect(r.flags).toContain('fell_back_to_prior_year');
+            expect(r.valuation.year).toBeLessThan(2026);
+            expect(r.valuation.amounts.length).toBeGreaterThan(0);
+            expect(r.valuation.amounts.every((a) => a.amount !== null)).toBe(true);
+        },
+        T,
+    );
+
+    it(
+        'carries three stages of the same year, because they are three different answers',
+        async () => {
+            const r = only(await lookup({ jurisdiction: 'cook-il', lookupBy: 'parcel_id', query: '29352110190000' }));
+
+            const stages = new Set(r.valuation.amounts.map((a) => a.stage));
+            expect(stages).toEqual(new Set(['mailed', 'certified', 'board_of_review']));
+            // The stage belongs to the amount. A single stage on the valuation object
+            // could only hold one of the three.
+            expect(r.valuation.stage).toBeUndefined();
+            expect(r.valuation.headline_stage).toBe('board_of_review');
+        },
+        T,
+    );
+
+    it(
+        'says a nine-year-old answer is nine years old rather than answering with confidence',
+        async () => {
+            const r = only(await lookup({ jurisdiction: 'cook-il', lookupBy: 'parcel_id', query: '17052170040000' }));
+
+            // The historical datasets still answer for this parcel. Only the current-year
+            // universe knows it stopped existing.
+            expect(r.flags).toContain('parcel_not_current');
+            // And this is the parcel the Board of Review cut by 57%, so the three stages
+            // of its last year disagree.
+            expect(r.flags).toContain('values_under_appeal');
+
+            const totals = r.valuation.amounts.filter((a) => a.basis === 'il_fractional_assessed');
+            expect(new Set(totals.map((a) => a.amount)).size).toBeGreaterThan(1);
+        },
+        T,
+    );
+
+    it(
+        'reads a condominium from the condominium dataset, which names its columns differently',
+        async () => {
+            const r = only(await lookup({ jurisdiction: 'cook-il', lookupBy: 'parcel_id', query: '33073170061016' }));
+
+            // char_unit_sf, not char_bldg_sf: the unit, not the building it is in.
+            expect(r.characteristics.living_area_sqft).toBeLessThan(r.characteristics.building_area_sqft);
+            expect(r.characteristics.bedrooms).toBeGreaterThan(0);
+            // char_building_pins is how many units share the building.
+            expect(r.characteristics.units).toBeGreaterThan(1);
+            expect(r.flags).toContain('co_located_parcels');
+        },
+        T,
+    );
+
+    it(
+        'flags every sale the publisher itself excludes, instead of reporting a $1 house',
+        async () => {
+            const r = only(await lookup({ jurisdiction: 'cook-il', lookupBy: 'parcel_id', query: '29352110190000' }));
+
+            const trustTransfer = r.sales.find((s) => s.price === 1);
+            expect(trustTransfer).toBeDefined();
+            expect(trustTransfer.nominal).toBe(true);
+            expect(trustTransfer.excluded_by_publisher).toBe(true);
+            expect(r.flags).toContain('sale_price_nominal');
+        },
+        T,
+    );
+
+    it(
+        'answers an address, collapsing the one-row-per-year dataset to one record per parcel',
+        async () => {
+            const records = await lookup({
+                jurisdiction: 'cook-il',
+                lookupBy: 'address',
+                query: '18102 Dorchester Ave',
+            });
+
+            expect(records.length).toBeGreaterThan(0);
+            // The addresses dataset holds a row per pin per year; the answer is per pin.
+            expect(new Set(records.map((r) => r.parcel_id)).size).toBe(records.length);
+            expect(records[0].owner.names[0]).toMatch(/FEIKEMA/);
+        },
+        T,
+    );
+
+    it('refuses a parcel id of the wrong length instead of querying with it', async () => {
+        const r = only(await lookup({ jurisdiction: 'cook-il', lookupBy: 'parcel_id', query: '1234' }));
+        expect(r.result).toBe('unparsed_parcel_id');
+    });
+});
+
 describe('routing', () => {
     it('answers for a jurisdiction with no adapter in the shape of a success', async () => {
         const r = only(await lookup({ jurisdiction: 'travis-tx', lookupBy: 'address', query: '1 Congress Ave' }));

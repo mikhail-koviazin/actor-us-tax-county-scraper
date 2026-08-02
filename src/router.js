@@ -7,6 +7,7 @@
  * on an error.
  */
 
+import * as cook from './adapters/cook.js';
 import * as duval from './adapters/duval.js';
 import * as sanDiego from './adapters/san-diego.js';
 import { buildUnsupported, JURISDICTIONS } from './record.js';
@@ -14,11 +15,11 @@ import { buildUnsupported, JURISDICTIONS } from './record.js';
 const ADAPTERS = {
     [sanDiego.id]: sanDiego,
     [duval.id]: duval,
+    [cook.id]: cook,
 };
 
 /** Known to the contract, no adapter yet. Named so the answer is not "no such county". */
 const PLANNED = {
-    'cook-il': 'Socrata open data portal, four datasets joined on pin.',
     'travis-tx': 'Bulk export only, no live endpoint. Answers require a pre-built index.',
 };
 

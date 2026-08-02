@@ -114,6 +114,8 @@ const toRecord = (attrs, { endpoint, retrievedAt, extraFlags = [] }) => {
     const livingArea = clampedAt(a.TOTAL_LVG_AREA, 99999);
     if (livingArea.clamped) flags.push('measurement_clamped');
 
+    const stage = notAssessable ? Stage.UNKNOWN : Stage.FINAL;
+
     const sales = [];
     const saleDate = mmddyy(a.DOCDATE);
     if (saleDate) {
@@ -135,7 +137,7 @@ const toRecord = (attrs, { endpoint, retrievedAt, extraFlags = [] }) => {
     return buildRecord({
         parcelId: str(a.APN),
         jurisdiction: id,
-        source: { mode, endpoint, retrieved_at: retrievedAt, live: true },
+        source: { mode, endpoints: [endpoint], retrieved_at: retrievedAt, live: true },
         asOf: { basis: AsOfBasis.UNKNOWN, value: null },
         owner: {
             names: ownerNames,
@@ -160,14 +162,21 @@ const toRecord = (attrs, { endpoint, retrievedAt, extraFlags = [] }) => {
         },
         valuation: {
             year: null,
-            stage: notAssessable ? Stage.UNKNOWN : Stage.FINAL,
             currency: 'USD',
+            // The stage rides on the amount, not on the valuation. California publishes one
+            // figure per parcel with no appeal cycle visible in this layer, so every amount
+            // here carries the same stage; Cook is where that stops being true.
             amounts: [
-                { basis: ValuationBasis.CA_LAND, amount: notAssessable ? null : num(a.ASR_LAND) },
-                { basis: ValuationBasis.CA_IMPROVEMENT, amount: notAssessable ? null : num(a.ASR_IMPR) },
-                { basis: ValuationBasis.CA_PROP13_FACTORED, amount: notAssessable ? null : num(a.ASR_TOTAL) },
+                { basis: ValuationBasis.CA_LAND, stage, amount: notAssessable ? null : num(a.ASR_LAND) },
+                { basis: ValuationBasis.CA_IMPROVEMENT, stage, amount: notAssessable ? null : num(a.ASR_IMPR) },
+                {
+                    basis: ValuationBasis.CA_PROP13_FACTORED,
+                    stage,
+                    amount: notAssessable ? null : num(a.ASR_TOTAL),
+                },
             ],
             headline_basis: ValuationBasis.CA_PROP13_FACTORED,
+            headline_stage: stage,
         },
         characteristics: {
             living_area_sqft: livingArea.value,

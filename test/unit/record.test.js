@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { chooseValuationYear } from '../../src/adapters/cook.js';
 import { splitAddress } from '../../src/geocode.js';
 import { buildRecord, FLAG_NOTES } from '../../src/record.js';
 
@@ -40,14 +41,60 @@ describe('buildRecord', () => {
             ...minimal,
             valuation: {
                 year: 2025,
-                stage: 'certified',
                 currency: 'USD',
-                amounts: [{ basis: 'fl_just_value', amount: 337293 }],
+                amounts: [{ basis: 'fl_just_value', stage: 'certified', amount: 337293 }],
                 headline_basis: 'fl_just_value',
+                headline_stage: 'certified',
             },
         });
         expect(record.valuation.total).toBeUndefined();
         expect(record.valuation.amounts[0].basis).toBe('fl_just_value');
+        // The stage is a property of the amount, because Cook has three at once.
+        expect(record.valuation.amounts[0].stage).toBe('certified');
+    });
+});
+
+describe('chooseValuationYear (Cook)', () => {
+    const row = (year, tot) => ({ year, ...(tot === null ? {} : { mailed_tot: String(tot) }) });
+
+    it('takes the newest year when it carries values', () => {
+        const chosen = chooseValuationYear([row('2025', 14550), row('2024', 14000)]);
+        expect(chosen.row.year).toBe('2025');
+        expect(chosen.pending).toBe(false);
+        expect(chosen.fellBack).toBe(false);
+    });
+
+    it('falls back past the empty newest row, which is the normal case mid-cycle', () => {
+        // Socrata omits the key entirely rather than sending an empty string, and the
+        // newest row for a township that has not been mailed yet has no amount keys.
+        const chosen = chooseValuationYear([row('2026.0', null), row('2025', 14550)]);
+        expect(chosen.row.year).toBe('2025');
+        expect(chosen.newestYear).toBe(2026);
+        expect(chosen.pending).toBe(true);
+        expect(chosen.fellBack).toBe(true);
+    });
+
+    it('sorts numerically, not by the text the API returns', () => {
+        // "2026.0" and "2025" are both strings in the same column, so a text sort is a
+        // coincidence that holds for four-digit years and nothing else.
+        const chosen = chooseValuationYear([row('2024', 1), row('2026.0', 3), row('2025', 2)]);
+        expect(chosen.row.year).toBe('2026.0');
+    });
+
+    it('reports pending with no fallback when no year has values at all', () => {
+        const chosen = chooseValuationYear([row('2026.0', null), row('2025', null)]);
+        expect(chosen.row).toBeNull();
+        expect(chosen.pending).toBe(true);
+        expect(chosen.fellBack).toBe(false);
+    });
+
+    it('survives an empty dataset', () => {
+        expect(chooseValuationYear([])).toEqual({
+            row: null,
+            newestYear: null,
+            pending: false,
+            fellBack: false,
+        });
     });
 });
 

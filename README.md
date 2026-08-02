@@ -8,14 +8,16 @@ The reconnaissance behind every design decision here, with measured timings and 
 
 ## Status
 
-| County        | Access mode                 | Parcel id       | Address                     | Live   |
-| ------------- | --------------------------- | --------------- | --------------------------- | ------ |
-| San Diego, CA | public ArcGIS REST          | yes, ~1.5 s     | yes, ~1.4 s, one request    | yes    |
-| Duval, FL     | Florida DOR statewide layer | yes, ~2 s       | yes, ~4 s including geocode | yes    |
-| Cook, IL      | Socrata open data portal    | not implemented | not implemented             | yes    |
-| Travis, TX    | bulk export                 | not implemented | not implemented             | **no** |
+| County        | Access mode                 | Parcel id          | Address                    | Live   |
+| ------------- | --------------------------- | ------------------ | -------------------------- | ------ |
+| San Diego, CA | public ArcGIS REST          | yes, 1 request     | yes, 1 request             | yes    |
+| Duval, FL     | Florida DOR statewide layer | yes, 1 request     | yes, geocode then envelope | yes    |
+| Cook, IL      | Socrata open data portal    | yes, 6 in parallel | yes, 1 then 6 per parcel   | yes    |
+| Travis, TX    | bulk export                 | not implemented    | not implemented            | **no** |
 
-Cook and Travis answer `unsupported_lookup` naming what they will support, rather than an error, so a caller can act on the reply.
+Travis answers `unsupported_lookup` naming what it will support, rather than an error, so a caller can act on the reply.
+
+Wall clock for a parcel id lookup runs about 1.5 to 3 seconds everywhere, but a single timing on these services is reproducible only to about a factor of five, so the request count is the honest column and the seconds are not.
 
 ## Running it locally
 
@@ -32,7 +34,9 @@ npm run probe -- --capabilities
 
 Four decisions drive the shape of every record, and each was forced by something measured.
 
-**No bare numbers.** There is no `assessed_value` field, and no `total`. `valuation.amounts` is a list of `{ basis, amount }`, because "assessed value" means four different things: an Illinois fraction of market value, a California Proposition 13 base year value frozen at the last sale, a Florida ladder whose rungs differ by the Save Our Homes cap, and a Texas appraised value minus a homestead cap. An agent asked to compare two properties will compare them, so the difference has to be structural rather than documented.
+**No bare numbers.** There is no `assessed_value` field, and no `total`. `valuation.amounts` is a list of `{ basis, stage, amount }`, because "assessed value" means four different things: an Illinois fraction of market value, a California Proposition 13 base year value frozen at the last sale, a Florida ladder whose rungs differ by the Save Our Homes cap, and a Texas appraised value minus a homestead cap. An agent asked to compare two properties will compare them, so the difference has to be structural rather than documented.
+
+`stage` rides on the amount rather than on the valuation because Cook publishes three of them for the same parcel in the same year, and they diverge. One parcel in 2016 was mailed at 3041, certified at 3041, and cut to 1303 by the Board of Review: three correct answers to "what is the assessed value", 57% apart, depending on where in the appeal cycle you stand.
 
 **Uncertainty is machine readable first.** Everything a caller must know to avoid being wrong is a flag from a fixed vocabulary, and `notes` carries the same thing as sentences. A flag outside the vocabulary throws at build time, so a typo cannot ship as a silently absent warning.
 

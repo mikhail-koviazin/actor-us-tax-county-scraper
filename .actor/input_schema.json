@@ -10,9 +10,9 @@
             "editor": "select",
             "enum": ["san-diego-ca", "duval-fl", "cook-il", "travis-tx"],
             "enumTitles": [
-                "San Diego County, CA (live, about 1.5 s, no freshness signal)",
+                "San Diego County, CA (live, about 1.5 s, no freshness signal at all)",
                 "Duval County, FL (live, about 2 s by parcel id, values are one assessment year behind)",
-                "Cook County, IL (not implemented yet)",
+                "Cook County, IL (live, about 3 s, data one day old, three assessment stages per year)",
                 "Travis County, TX (not implemented yet, no live endpoint exists)"
             ],
             "default": "san-diego-ca"
