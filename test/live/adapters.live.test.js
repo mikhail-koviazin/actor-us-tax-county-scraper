@@ -313,11 +313,26 @@ describe('Cook, Socrata open data portal', () => {
 });
 
 describe('routing', () => {
-    it('answers for a jurisdiction with no adapter in the shape of a success', async () => {
-        const r = only(await lookup({ jurisdiction: 'travis-tx', lookupBy: 'address', query: '1 Congress Ave' }));
-        expect(r.result).toBe('unsupported_lookup');
-        expect(r.jurisdiction.county).toBe('Travis');
-        expect(r.reason).toMatch(/no live endpoint/i);
+    /**
+     * This test used to assert `unsupported_lookup` for Travis by address, which was true
+     * until the index gave Travis an address route in v0.5 and stale from that commit on.
+     *
+     * What it asserts now is the distinction the contract draws: an address that is simply
+     * not in the county is genuinely empty and comes back as an empty list, while an
+     * address route that could not be travelled at all is a refusal. Duval refuses
+     * `address_not_found` after geocoding because the trip failed; Travis returns nothing
+     * because the trip succeeded and the county has no such address.
+     */
+    it('separates "no such address here" from "could not look", both without an error', async () => {
+        const records = await lookup({ jurisdiction: 'travis-tx', lookupBy: 'address', query: '1 Congress Ave' });
+
+        if (records.length === 0) return; // index present, address genuinely absent
+        // No index on this machine: then it must be the refusal, in the refusal shape.
+        const r = only(records);
+        expect(r.result).toBe('index_not_built');
+        expect(r.jurisdiction).toEqual({ county: 'Travis', state: 'TX', fips: '48453' });
+        expect(r.source.endpoints).toEqual([]);
+        expect(r.remedy).toMatch(/build-travis-index/);
     });
 
     it('throws only for a county it has never heard of', async () => {

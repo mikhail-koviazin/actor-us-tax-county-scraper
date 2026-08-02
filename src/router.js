@@ -78,6 +78,7 @@ export async function lookup({ jurisdiction, lookupBy, query, maxResults = 5 }) 
                 lookupBy,
                 query,
                 supported,
+                mode: adapter.mode,
                 reason: `This jurisdiction has no route for ${lookupBy}.`,
             }),
         ];

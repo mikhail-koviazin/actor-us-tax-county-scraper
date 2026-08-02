@@ -162,23 +162,98 @@ export const buildRecord = ({
 };
 
 /**
+ * Why an answer could not be given. A refusal is an answer, so these are as controlled as
+ * the flags are: a code outside this list throws when the refusal is built.
+ */
+export const Refusal = {
+    /** The jurisdiction is real, this lookup route is not. */
+    UNSUPPORTED_LOOKUP: 'unsupported_lookup',
+    /** The query does not have the shape this county's identifiers have. */
+    UNPARSED_PARCEL_ID: 'unparsed_parcel_id',
+    /** The address could not be split into the columns the source stores. */
+    UNPARSED_ADDRESS: 'unparsed_address',
+    /** The address route runs through a geocoder and the geocoder returned nothing. */
+    ADDRESS_NOT_GEOCODED: 'address_not_geocoded',
+    /** The address geocoded and no parcel near the point carries it. */
+    ADDRESS_NOT_FOUND: 'address_not_found',
+    /** Travis answers from an index and no index has been built. */
+    INDEX_NOT_BUILT: 'index_not_built',
+    /** The source was asked and did not answer usefully. */
+    SOURCE_FAILURE: 'source_failure',
+};
+
+const REFUSAL_CODES = new Set(Object.values(Refusal));
+
+/**
+ * Build one refusal.
+ *
+ * Every refusal goes through here for the same reason every success goes through
+ * buildRecord: so that the shape cannot drift per adapter. It drifted anyway for four
+ * versions, because refusals were object literals written at five call sites, and nobody
+ * noticed while the reader of a refusal was the person who had typed the query. An agent
+ * fanning out across four counties does not have that context, so the county has to be in
+ * the record.
+ *
+ * `source.endpoints` is the same key a success uses, and it is an array here too, empty
+ * when the refusal happened before anything was asked. Contract rule 4 says a record names
+ * where it came from; a record that came from nowhere says so, rather than omitting the
+ * field and leaving the caller to guess.
+ */
+export const buildRefusal = ({
+    result,
+    jurisdiction,
+    lookupBy,
+    query,
+    mode = null,
+    endpoints = [],
+    reason,
+    remedy = null,
+    failure = null,
+    supportedLookups = null,
+    search = null,
+}) => {
+    if (!REFUSAL_CODES.has(result)) throw new Error(`unknown refusal result: ${result}`);
+    if (!reason) throw new Error(`refusal ${result} has no reason`);
+
+    return {
+        result,
+        jurisdiction: JURISDICTIONS[jurisdiction] ?? null,
+        requested: { lookup_by: lookupBy, query },
+        source: { mode, endpoints },
+        reason,
+        ...(remedy ? { remedy } : {}),
+        ...(failure ? { failure } : {}),
+        ...(supportedLookups ? { supported_lookups: supportedLookups } : {}),
+        ...(search ? { search } : {}),
+    };
+};
+
+/**
  * The answer to a question this jurisdiction cannot answer.
  *
  * Contract rule 3: an unsupported lookup is a structured answer listing what the
  * jurisdiction does support, not an error. An agent can act on the former.
  */
-export const buildUnsupported = ({ jurisdiction, lookupBy, query, supported, reason }) => ({
-    result: 'unsupported_lookup',
-    jurisdiction: JURISDICTIONS[jurisdiction],
-    requested: { lookup_by: lookupBy, query },
-    supported_lookups: supported,
-    reason,
-});
+export const buildUnsupported = ({ jurisdiction, lookupBy, query, supported, reason, mode = null }) =>
+    buildRefusal({
+        result: Refusal.UNSUPPORTED_LOOKUP,
+        jurisdiction,
+        lookupBy,
+        query,
+        mode,
+        reason,
+        supportedLookups: supported,
+    });
 
 /** A failure the caller has to see, in the same shape as a success. */
-export const buildFailure = ({ jurisdiction, lookupBy, query, outcome, detail, endpoint, ms }) => ({
-    result: 'source_failure',
-    jurisdiction: JURISDICTIONS[jurisdiction],
-    requested: { lookup_by: lookupBy, query },
-    failure: { outcome, detail, endpoint, elapsed_ms: ms },
-});
+export const buildFailure = ({ jurisdiction, lookupBy, query, mode = null, outcome, detail, endpoint, ms, reason }) =>
+    buildRefusal({
+        result: Refusal.SOURCE_FAILURE,
+        jurisdiction,
+        lookupBy,
+        query,
+        mode,
+        endpoints: endpoint ? [endpoint] : [],
+        reason: reason ?? `The source was asked and the request ended as "${outcome}".`,
+        failure: { outcome, detail, elapsed_ms: ms },
+    });

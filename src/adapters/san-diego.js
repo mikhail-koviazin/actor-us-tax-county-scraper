@@ -9,7 +9,7 @@
 import { splitAddress } from '../geocode.js';
 import { getJson, noFeatures, Outcome } from '../http.js';
 import { addressKey, bathsTimesTen, blank, clampedAt, joinParts, mmddyy, num, paddedInt, str } from '../normalize.js';
-import { AsOfBasis, buildFailure, buildRecord, Mode, Stage, ValuationBasis } from '../record.js';
+import { AsOfBasis, buildFailure, buildRecord, buildRefusal, Mode, Refusal, Stage, ValuationBasis } from '../record.js';
 
 export const id = 'san-diego-ca';
 export const mode = Mode.ARCGIS_REST;
@@ -198,6 +198,7 @@ const failure = (lookupBy, q, r) =>
         jurisdiction: id,
         lookupBy,
         query: q,
+        mode,
         outcome: r.outcome,
         detail: r.detail,
         endpoint: r.url,
@@ -230,11 +231,14 @@ export async function byAddress(address, { maxResults = 5 } = {}) {
     const parts = splitAddress(address);
     if (!parts) {
         return [
-            {
-                result: 'unparsed_address',
-                requested: { lookup_by: 'address', query: address },
+            buildRefusal({
+                result: Refusal.UNPARSED_ADDRESS,
+                jurisdiction: id,
+                lookupBy: 'address',
+                query: address,
+                mode,
                 reason: 'The address could not be split into a house number and a street name, which is what this layer stores in separate columns.',
-            },
+            }),
         ];
     }
 

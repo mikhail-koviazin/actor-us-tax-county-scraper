@@ -11,7 +11,7 @@
 
 import { getJson, Outcome } from '../http.js';
 import { addressKey, num, str, zeroAsNull } from '../normalize.js';
-import { AsOfBasis, buildFailure, buildRecord, Mode, Stage, ValuationBasis } from '../record.js';
+import { AsOfBasis, buildFailure, buildRecord, buildRefusal, Mode, Refusal, Stage, ValuationBasis } from '../record.js';
 
 export const id = 'cook-il';
 export const mode = Mode.OPEN_DATA_PORTAL;
@@ -288,11 +288,14 @@ export async function byParcelId(parcelId, { maxResults = 5 } = {}) {
     const pin = normalizePin(parcelId);
     if (pin.length !== PIN_LENGTH) {
         return [
-            {
-                result: 'unparsed_parcel_id',
-                requested: { lookup_by: 'parcel_id', query: parcelId },
+            buildRefusal({
+                result: Refusal.UNPARSED_PARCEL_ID,
+                jurisdiction: id,
+                lookupBy: 'parcel_id',
+                query: parcelId,
+                mode,
                 reason: `Cook parcel identifiers are ${PIN_LENGTH} digits with no separators. Received ${pin.length}.`,
-            },
+            }),
         ];
     }
 
@@ -308,6 +311,7 @@ export async function byParcelId(parcelId, { maxResults = 5 } = {}) {
                 jurisdiction: id,
                 lookupBy: 'parcel_id',
                 query: parcelId,
+                mode,
                 outcome: worst.outcome,
                 detail: worst.detail,
                 endpoint: worst.url,
@@ -348,6 +352,7 @@ export async function byAddress(address, { maxResults = 5 } = {}) {
                 jurisdiction: id,
                 lookupBy: 'address',
                 query: address,
+                mode,
                 outcome: r.outcome,
                 detail: r.detail,
                 endpoint: r.url,

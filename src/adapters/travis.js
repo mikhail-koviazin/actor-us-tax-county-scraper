@@ -21,7 +21,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { addressKey } from '../normalize.js';
-import { AsOfBasis, buildRecord, Mode, Stage, ValuationBasis } from '../record.js';
+import { AsOfBasis, buildRecord, buildRefusal, Mode, Refusal, Stage, ValuationBasis } from '../record.js';
 import { addressKeyOf, addressShard, propShard } from '../travis/build-index.js';
 
 export const id = 'travis-tx';
@@ -95,13 +95,16 @@ const addrShardRows = async (shard) => {
  * This is not an error. The jurisdiction is real, the route is real, and the only thing
  * missing is a build the operator has not run. Saying so is actionable; a 500 is not.
  */
-const noIndex = (lookupBy, query) => ({
-    result: 'index_not_built',
-    jurisdiction: { county: 'Travis', state: 'TX', fips: '48453' },
-    requested: { lookup_by: lookupBy, query },
-    reason: 'This county publishes no endpoint that answers a question about one parcel, so answers come from an index built from the certified export. No index has been built yet.',
-    remedy: 'Run bin/build-travis-index.js. It fetches 129 MB of a 531 MB archive and takes under a minute.',
-});
+const noIndex = (lookupBy, query) =>
+    buildRefusal({
+        result: Refusal.INDEX_NOT_BUILT,
+        jurisdiction: id,
+        lookupBy,
+        query,
+        mode,
+        reason: 'This county publishes no endpoint that answers a question about one parcel, so answers come from an index built from the certified export. No index has been built yet.',
+        remedy: 'Run bin/build-travis-index.js. It fetches 129 MB of a 531 MB archive and takes under a minute.',
+    });
 
 const toRecord = (property, index, { extraFlags = [], resultSet = null } = {}) => {
     const flags = ['answered_from_index', ...extraFlags];

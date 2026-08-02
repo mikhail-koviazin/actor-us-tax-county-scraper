@@ -22,7 +22,7 @@
 import { envelope, geocode } from '../geocode.js';
 import { getJson, noFeatures, Outcome } from '../http.js';
 import { addressKey, joinParts, num, str, zeroAsNull } from '../normalize.js';
-import { AsOfBasis, buildFailure, buildRecord, Mode, Stage, ValuationBasis } from '../record.js';
+import { AsOfBasis, buildFailure, buildRecord, buildRefusal, Mode, Refusal, Stage, ValuationBasis } from '../record.js';
 
 export const id = 'duval-fl';
 export const mode = Mode.STATE_PROGRAMME;
@@ -201,6 +201,7 @@ const failure = (lookupBy, q, r) =>
         jurisdiction: id,
         lookupBy,
         query: q,
+        mode,
         outcome: r.outcome,
         detail: r.detail,
         endpoint: r.url,
@@ -233,17 +234,18 @@ export async function byAddress(address, { maxResults = 5 } = {}) {
     const geo = await geocode(address);
     if (!geo.ok) {
         return [
-            {
-                result: geo.outcome === Outcome.EMPTY ? 'address_not_geocoded' : 'source_failure',
-                requested: { lookup_by: 'address', query: address },
-                failure: {
-                    outcome: geo.outcome,
-                    detail: geo.detail,
-                    endpoint: geo.endpoint,
-                    elapsed_ms: geo.ms,
-                },
+            buildRefusal({
+                result: geo.outcome === Outcome.EMPTY ? Refusal.ADDRESS_NOT_GEOCODED : Refusal.SOURCE_FAILURE,
+                jurisdiction: id,
+                lookupBy: 'address',
+                query: address,
+                mode,
+                // The geocoder is not this county's publisher, and it is still where the
+                // answer died. Naming it is the whole point of rule 4.
+                endpoints: geo.endpoint ? [geo.endpoint] : [],
+                failure: { outcome: geo.outcome, detail: geo.detail, elapsed_ms: geo.ms },
                 reason: 'This jurisdiction cannot filter on its address column, so an address is only reachable through coordinates. Without a geocoded point there is no route.',
-            },
+            }),
         ];
     }
 
@@ -287,13 +289,18 @@ export async function byAddress(address, { maxResults = 5 } = {}) {
     }
 
     return [
-        {
-            result: 'address_not_found',
-            requested: { lookup_by: 'address', query: address },
-            geocoded_to: { x: geo.x, y: geo.y, matched: geo.matched },
-            searched_envelopes_degrees: ENVELOPES,
-            last_endpoint: lastResult?.url,
+        buildRefusal({
+            result: Refusal.ADDRESS_NOT_FOUND,
+            jurisdiction: id,
+            lookupBy: 'address',
+            query: address,
+            mode,
+            endpoints: lastResult?.url ? [lastResult.url] : [],
+            search: {
+                geocoded_to: { x: geo.x, y: geo.y, matched: geo.matched },
+                envelopes_degrees: ENVELOPES,
+            },
             reason: 'The address geocoded, but no parcel within the widest envelope tried carries it. Either the geocoder placed it away from the assessor centroids, or the parcel is not in this county.',
-        },
+        }),
     ];
 }
