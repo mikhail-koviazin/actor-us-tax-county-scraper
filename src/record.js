@@ -108,9 +108,9 @@ export const FLAG_NOTES = {
     values_under_appeal:
         'The mailed, certified and board of review figures for this year are not all the same, so the assessment changed during the appeal cycle. Which one is correct depends on the date the question is being asked about.',
     owner_withheld_by_policy:
-        "The owner name and mailing address are withheld. Two publishers of this county's parcel data disagree in public about whether the name may be online: the county assessor serves it, and the county GIS agency states that California AB1785 bars it from publishing owner name and address in any publicly accessible online location. The parcel is complete otherwise. Set allowContestedOwnerNames to true to receive the name.",
+        'The owner name and mailing address are withheld: the county assessor publishes them, and the county GIS agency states that California AB1785 bars publishing them online. Set allowContestedOwnerNames to true to receive them.',
     owner_name_contested:
-        "This owner name was returned on request, and its publication is disputed. The county GIS agency states that California AB1785 bars it from publishing owner name and address online, while the county assessor's own service returns the field to anyone who asks. Availability is not permission, and this fact travels with the name.",
+        "This owner name was returned on request and its publication is disputed: the county GIS agency states that California AB1785 bars publishing it online, while the assessor's own service returns it to anyone who asks.",
 };
 
 /**
