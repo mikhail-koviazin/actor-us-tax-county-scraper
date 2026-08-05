@@ -61,7 +61,9 @@ describe('buildRefusal', () => {
     });
 
     it('takes the jurisdiction from the table rather than from whoever is calling', () => {
-        expect(buildRefusal(minimal).jurisdiction).toEqual(JURISDICTIONS['san-diego-ca']);
+        const { county, state, fips } = JURISDICTIONS['san-diego-ca'];
+        // Identity only. The table also holds policy, and policy is not part of an answer.
+        expect(buildRefusal(minimal).jurisdiction).toEqual({ county, state, fips });
     });
 
     it('always carries source.endpoints, empty when nothing was asked', () => {
@@ -98,7 +100,8 @@ describe('the refusals reachable without a network', () => {
         expect(refusal.result).toBe(Refusal.INDEX_NOT_BUILT);
         // The FIPS code used to be a literal here and is now the same table every other
         // record reads, so it cannot drift on its own.
-        expect(refusal.jurisdiction).toEqual(JURISDICTIONS['travis-tx']);
+        expect(refusal.jurisdiction).toEqual({ county: 'Travis', state: 'TX', fips: '48453' });
+        expect(refusal.jurisdiction.fips).toBe(JURISDICTIONS['travis-tx'].fips);
         expect(refusal.remedy).toMatch(/build-travis-index/);
     });
 });

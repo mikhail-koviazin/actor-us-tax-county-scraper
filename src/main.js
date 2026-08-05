@@ -13,16 +13,16 @@ import { lookup } from './router.js';
 await Actor.init();
 
 const input = (await Actor.getInput()) ?? {};
-const { jurisdiction, lookupBy = 'parcel_id', query, maxResults = 5 } = input;
+const { jurisdiction, lookupBy = 'parcel_id', query, maxResults = 5, allowContestedOwnerNames = false } = input;
 
 if (!jurisdiction || !query) {
     throw new Error('Both "jurisdiction" and "query" are required.');
 }
 
-log.info('Looking up parcel', { jurisdiction, lookupBy, query, maxResults });
+log.info('Looking up parcel', { jurisdiction, lookupBy, query, maxResults, allowContestedOwnerNames });
 
 const started = Date.now();
-const records = await lookup({ jurisdiction, lookupBy, query, maxResults });
+const records = await lookup({ jurisdiction, lookupBy, query, maxResults, allowContestedOwnerNames });
 const elapsed = Date.now() - started;
 
 await Actor.pushData(records);

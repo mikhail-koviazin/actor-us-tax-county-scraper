@@ -33,6 +33,13 @@
             "editor": "textfield",
             "prefill": "3532803300"
         },
+        "allowContestedOwnerNames": {
+            "title": "Include owner names whose publication is disputed",
+            "type": "boolean",
+            "description": "Whether to return owner names for a county where two publishers of the same parcel data disagree in public about whether the name may be online.\n\nOne county here is in that position. In San Diego the county assessor's own service returns the owner name to anyone who asks, unauthenticated, while the joint city and county GIS agency states that California AB1785 bars it from publishing owner name and address information in any publicly accessible online location. This Actor does not settle which one governs.\n\nLeft false, which is the default, the parcel comes back complete with the owner name and mailing address withheld and the flag owner_withheld_by_policy explaining why. Set it to true if you have a reason to receive that name; the record then carries owner_name_contested instead, so the dispute travels with the data rather than being lost at the first hop. Counties whose owner names are published without dispute are unaffected either way.",
+            "editor": "checkbox",
+            "default": false
+        },
         "maxResults": {
             "title": "Maximum records",
             "type": "integer",

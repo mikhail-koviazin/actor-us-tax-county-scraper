@@ -13,7 +13,7 @@ The reconnaissance behind every design decision here, with measured timings and 
 | San Diego, CA | public ArcGIS REST          | yes, 1 request     | yes, 1 request             | yes    |
 | Duval, FL     | Florida DOR statewide layer | yes, 1 request     | yes, geocode then envelope | yes    |
 | Cook, IL      | Socrata open data portal    | yes, 6 in parallel | yes, 1 then 6 per parcel   | yes    |
-| Travis, TX    | bulk export                 | not implemented    | not implemented            | **no** |
+| Travis, TX    | bulk export                 | yes, from an index | yes, from an index         | **no** |
 
 Travis is the one that breaks the shape. It publishes no endpoint that answers a question about one parcel, so the Actor builds an index from the certified roll and serves from it: `source.live` is false, `as_of.basis` is the date the roll was posted rather than today, and every record carries `answered_from_index`. Lookups come back in about 35 ms, which is twenty times faster than the live counties and twenty times less current.
 
@@ -57,7 +57,7 @@ Four decisions drive the shape of every record, and each was forced by something
 - **Parse the body before the status.** Florida returns HTTP 200 carrying `{"error":{"code":400}}` after 56 seconds. `response.ok` is never consulted on its own.
 - **Do not match on the error text.** The same layer worded that error two ways on the same day, once in `message` and once in `details`.
 - **Empty is sometimes a failure.** San Diego answers a sum that overflows a 32-bit integer with HTTP 200, the output fields declared, and `"features": []`. Nothing in that response is malformed, so the classifier has to be told per call whether empty is a possible correct answer.
-- **Reshape rather than retry.** Florida's 56 second failure is deterministic across six measurements. Retrying it burns minutes. No address ever goes into a `where` clause for that county.
+- **Reshape rather than retry.** Florida's 56 second failure is deterministic across seven measurements taken on two dates, 55.5 to 58.5 seconds. Retrying it burns minutes. No address ever goes into a `where` clause for that county.
 
 `test/live/known-failures.live.test.js` asserts that these three source behaviours still exist. If a county fixes its index or its column type, that suite fails, which is the point.
 
@@ -66,3 +66,10 @@ Four decisions drive the shape of every record, and each was forced by something
 None of the four endpoints states machine-readable terms. San Diego's service carries no `licenseInfo` key at all, and empty description and copyright fields. Availability is not permission.
 
 Owner names are the sensitive field. SanGIS states that under California AB1785 it may not publish owner name and address online, while the county's own layer served them unauthenticated on 2026-08-02. Both statements were current, and this repo takes no position on which is right.
+
+Taking no position still requires a default, and shipping whatever the endpoint hands over is not a neutral one. So San Diego is marked `contested` in the jurisdiction table, and its owner name and mailing address are withheld unless the caller sets `allowContestedOwnerNames`. Either way the record says what happened: `owner_withheld_by_policy` when the name is held back, `owner_name_contested` when it is returned, so the dispute travels with the data instead of ending at the first hop. The three counties whose owner names are published without dispute are unaffected.
+
+```bash
+npm run probe -- san-diego-ca parcel_id 3532803300            # owner withheld
+npm run probe -- san-diego-ca parcel_id 3532803300 --owner    # owner returned, flagged
+```

@@ -12,6 +12,11 @@ import { lookup } from '../../src/router.js';
  *
  * Values that will drift with the roll (owner names, assessed amounts) are asserted on
  * shape rather than on the exact number. Values that are structural are asserted exactly.
+ *
+ * The live suite runs with file parallelism off (see package.json). known-failures holds a
+ * Florida request open for the best part of a minute by design, and two files sharing one
+ * connection turn that wait into transport failures over here, which look like a county
+ * breaking and are not.
  */
 
 const T = 60_000;
@@ -39,6 +44,29 @@ describe('San Diego, public ArcGIS REST', () => {
             // No bare total anywhere: every amount carries the basis it was computed on.
             expect(r.valuation.total).toBeUndefined();
             expect(r.valuation.headline_basis).toBe('ca_prop13_factored');
+        },
+        T,
+    );
+
+    it(
+        'withholds the owner name two publishers disagree about, and returns it only when asked',
+        async () => {
+            const base = { jurisdiction: 'san-diego-ca', lookupBy: 'parcel_id', query: '3532803300' };
+
+            const withheld = only(await lookup(base));
+            expect(withheld.owner.names).toEqual([]);
+            expect(withheld.owner.mailing_address).toBeNull();
+            expect(withheld.flags).toContain('owner_withheld_by_policy');
+            // Withholding one field is not refusing the parcel: everything else is here.
+            expect(withheld.situs_address.full).toBe('2461 RIDGEGATE ROW');
+
+            const allowed = only(await lookup({ ...base, allowContestedOwnerNames: true }));
+            // If this ever comes back empty, the county has stopped serving the field and
+            // the whole AB1785 story in the research repo needs re-checking, not patching.
+            expect(allowed.owner.names.length).toBeGreaterThan(0);
+            expect(allowed.owner.mailing_address).not.toBeNull();
+            expect(allowed.flags).toContain('owner_name_contested');
+            expect(allowed.flags).not.toContain('owner_withheld_by_policy');
         },
         T,
     );

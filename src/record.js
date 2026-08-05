@@ -107,13 +107,84 @@ export const FLAG_NOTES = {
         "This record exists for the assessor's own record keeping and carries no assessment. It is not a taxable parcel.",
     values_under_appeal:
         'The mailed, certified and board of review figures for this year are not all the same, so the assessment changed during the appeal cycle. Which one is correct depends on the date the question is being asked about.',
+    owner_withheld_by_policy:
+        "The owner name and mailing address are withheld. Two publishers of this county's parcel data disagree in public about whether the name may be online: the county assessor serves it, and the county GIS agency states that California AB1785 bars it from publishing owner name and address in any publicly accessible online location. The parcel is complete otherwise. Set allowContestedOwnerNames to true to receive the name.",
+    owner_name_contested:
+        "This owner name was returned on request, and its publication is disputed. The county GIS agency states that California AB1785 bars it from publishing owner name and address online, while the county assessor's own service returns the field to anyone who asks. Availability is not permission, and this fact travels with the name.",
 };
 
+/**
+ * Whether this county's owner name is safe to pass on.
+ *
+ * `contested` is not a judgement about who is right. SanGIS, the joint city and county GIS
+ * agency, states that under California AB1785 it may not publish parcel owner name and
+ * address information in any publicly accessible online location. The county assessor's own
+ * layer served that field on every parcel queried on 2026-08-02, unauthenticated, over the
+ * public internet. Both statements were current, and settling which of them governs is not
+ * this Actor's job. Shipping whatever the endpoint hands over is not neutral either: it
+ * picks the same side, silently. So the default withholds and says why.
+ */
+export const OwnerNamePolicy = {
+    PUBLISHED: 'published',
+    CONTESTED: 'contested',
+};
+
+/**
+ * The counties, and the two things that are true about each one before any request is made.
+ *
+ * The owner name policy lives here rather than in the adapter on purpose. The refusal path
+ * drifted for four versions because five adapters each built the same thing their own way,
+ * and the lesson generalizes: a rule that has to be remembered by whoever writes the next
+ * adapter is a rule that will be missed. A county added to this table inherits the question.
+ */
 export const JURISDICTIONS = {
-    'cook-il': { county: 'Cook', state: 'IL', fips: '17031' },
-    'san-diego-ca': { county: 'San Diego', state: 'CA', fips: '06073' },
-    'duval-fl': { county: 'Duval', state: 'FL', fips: '12031' },
-    'travis-tx': { county: 'Travis', state: 'TX', fips: '48453' },
+    'cook-il': { county: 'Cook', state: 'IL', fips: '17031', owner_name_policy: OwnerNamePolicy.PUBLISHED },
+    'san-diego-ca': { county: 'San Diego', state: 'CA', fips: '06073', owner_name_policy: OwnerNamePolicy.CONTESTED },
+    'duval-fl': { county: 'Duval', state: 'FL', fips: '12031', owner_name_policy: OwnerNamePolicy.PUBLISHED },
+    'travis-tx': { county: 'Travis', state: 'TX', fips: '48453', owner_name_policy: OwnerNamePolicy.PUBLISHED },
+};
+
+/**
+ * The jurisdiction identity as a record carries it: who answered, and nothing else.
+ *
+ * The table above holds policy alongside identity, and policy has no business in the output
+ * shape, so the projection is explicit rather than a spread of whatever the table grows next.
+ */
+const place = (key) => {
+    const j = JURISDICTIONS[key];
+    return j ? { county: j.county, state: j.state, fips: j.fips } : null;
+};
+
+/**
+ * Add a flag to a finished record, keeping notes derived from flags rather than appended.
+ *
+ * Contract rule 2 holds only if it is impossible to flag something without explaining it,
+ * so the sentences are regenerated from the flag list instead of being pushed alongside it.
+ */
+const withFlag = (record, flag) => {
+    const flags = [...new Set([...(record.flags ?? []), flag])].sort();
+    return { ...record, flags, notes: flags.map((f) => FLAG_NOTES[f]) };
+};
+
+/**
+ * Apply the owner name policy to one answer.
+ *
+ * Runs once in the router over everything an adapter returns, for the reason given on
+ * JURISDICTIONS. Both outcomes are flagged: withholding the name is a fact the caller needs,
+ * and so is receiving a name whose publication is disputed, because whatever the agent does
+ * with that name next happens outside this Actor.
+ */
+export const applyOwnerNamePolicy = (record, jurisdiction, { allowContestedOwnerNames = false } = {}) => {
+    if (JURISDICTIONS[jurisdiction]?.owner_name_policy !== OwnerNamePolicy.CONTESTED) return record;
+    // A refusal carries no owner, and a record with no owner block has nothing to withhold.
+    if (record.result || !record.owner) return record;
+
+    if (allowContestedOwnerNames) return withFlag(record, 'owner_name_contested');
+
+    return withFlag(
+        { ...record, owner: { ...record.owner, names: [], mailing_address: null } },
+        'owner_withheld_by_policy',
+    );
 };
 
 /**
@@ -147,7 +218,7 @@ export const buildRecord = ({
 
     return {
         parcel_id: parcelId,
-        jurisdiction: JURISDICTIONS[jurisdiction],
+        jurisdiction: place(jurisdiction),
         source,
         result_set: resultSet,
         as_of: asOf,
@@ -217,7 +288,7 @@ export const buildRefusal = ({
 
     return {
         result,
-        jurisdiction: JURISDICTIONS[jurisdiction] ?? null,
+        jurisdiction: place(jurisdiction),
         requested: { lookup_by: lookupBy, query },
         source: { mode, endpoints },
         reason,

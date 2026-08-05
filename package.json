@@ -25,7 +25,7 @@
         "lint": "eslint",
         "lint:fix": "eslint --fix",
         "test": "vitest run test/unit",
-        "test:live": "vitest run test/live"
+        "test:live": "vitest run --no-file-parallelism test/live"
     },
     "author": "Mikhail Koviazin",
     "license": "ISC"

@@ -11,7 +11,7 @@ import * as cook from './adapters/cook.js';
 import * as duval from './adapters/duval.js';
 import * as sanDiego from './adapters/san-diego.js';
 import * as travis from './adapters/travis.js';
-import { buildUnsupported, JURISDICTIONS } from './record.js';
+import { applyOwnerNamePolicy, buildUnsupported, JURISDICTIONS } from './record.js';
 
 const ADAPTERS = {
     [sanDiego.id]: sanDiego,
@@ -47,9 +47,10 @@ export const capabilities = () =>
  * @param {'parcel_id'|'address'} input.lookupBy
  * @param {string} input.query
  * @param {number} [input.maxResults]
+ * @param {boolean} [input.allowContestedOwnerNames] see applyOwnerNamePolicy
  * @returns {Promise<object[]>} always an array, always something the caller can act on
  */
-export async function lookup({ jurisdiction, lookupBy, query, maxResults = 5 }) {
+export async function lookup({ jurisdiction, lookupBy, query, maxResults = 5, allowContestedOwnerNames = false }) {
     if (!(jurisdiction in JURISDICTIONS)) {
         throw new Error(`unknown jurisdiction "${jurisdiction}", expected one of: ${jurisdictions().join(', ')}`);
     }
@@ -85,5 +86,9 @@ export async function lookup({ jurisdiction, lookupBy, query, maxResults = 5 }) 
     }
 
     const opts = { maxResults };
-    return lookupBy === 'parcel_id' ? adapter.byParcelId(query, opts) : adapter.byAddress(query, opts);
+    const records =
+        lookupBy === 'parcel_id' ? await adapter.byParcelId(query, opts) : await adapter.byAddress(query, opts);
+
+    // Applied here, once, over everything: an adapter cannot forget a rule it never sees.
+    return records.map((r) => applyOwnerNamePolicy(r, jurisdiction, { allowContestedOwnerNames }));
 }
