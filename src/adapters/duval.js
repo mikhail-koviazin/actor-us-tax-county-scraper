@@ -189,7 +189,11 @@ const toRecord = (a, { endpoint, retrievedAt, extraFlags = [], resultSet = null 
             bedrooms: null, // Not in the statewide layer.
             bathrooms: null,
             units: zeroAsNull(a.NO_RES_UNT),
-            buildings: zeroAsNull(a.NO_BULDNG),
+            // `building_records` and not `buildings`: Cook publishes the same count under
+            // the first name, and the multiple_buildings note points the caller at that
+            // name. Two names for one concept inside one normalized record is the defect
+            // this Actor exists to remove from the sources, not to reproduce.
+            building_records: zeroAsNull(a.NO_BULDNG),
         },
         sales,
         flags,

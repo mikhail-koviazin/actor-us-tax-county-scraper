@@ -188,6 +188,29 @@ export const applyOwnerNamePolicy = (record, jurisdiction, { allowContestedOwner
 };
 
 /**
+ * Every vocabulary a record carries, so that all of them are enforced and not just one.
+ *
+ * `flags` threw on an unknown value from the first commit. `basis`, `stage`, `as_of.basis`
+ * and `source.mode` did not: four adapters imported the constants and used them by
+ * convention. That is the same arrangement that let the refusal path drift for four
+ * versions, and it went unnoticed for the same reason, which is that nothing ever read the
+ * output back and compared it to what the contract said. Declaring the dataset schema is
+ * what surfaced it, so the check lives next to the declaration it has to agree with.
+ */
+const VOCABULARIES = {
+    'source.mode': new Set(Object.values(Mode)),
+    'as_of.basis': new Set(Object.values(AsOfBasis)),
+    basis: new Set(Object.values(ValuationBasis)),
+    stage: new Set(Object.values(Stage)),
+};
+
+/** Absent is allowed everywhere; wrong is not. A null basis is a gap, a typo is a lie. */
+const checkVocabulary = (name, value) => {
+    if (value === null || value === undefined) return;
+    if (!VOCABULARIES[name].has(value)) throw new Error(`unknown ${name}: ${value}`);
+};
+
+/**
  * Build one output record.
  *
  * `valuation.amounts` is a list rather than a `total` field. Florida publishes a ladder
@@ -215,6 +238,15 @@ export const buildRecord = ({
     const unique = [...new Set(flags)].sort();
     const unknown = unique.filter((f) => !(f in FLAG_NOTES));
     if (unknown.length) throw new Error(`unknown flag(s): ${unknown.join(', ')}`);
+
+    checkVocabulary('source.mode', source?.mode);
+    checkVocabulary('as_of.basis', asOf?.basis);
+    checkVocabulary('basis', valuation?.headline_basis);
+    checkVocabulary('stage', valuation?.headline_stage);
+    for (const amount of valuation?.amounts ?? []) {
+        checkVocabulary('basis', amount.basis);
+        checkVocabulary('stage', amount.stage);
+    }
 
     return {
         parcel_id: parcelId,
@@ -285,6 +317,7 @@ export const buildRefusal = ({
 }) => {
     if (!REFUSAL_CODES.has(result)) throw new Error(`unknown refusal result: ${result}`);
     if (!reason) throw new Error(`refusal ${result} has no reason`);
+    checkVocabulary('source.mode', mode);
 
     return {
         result,

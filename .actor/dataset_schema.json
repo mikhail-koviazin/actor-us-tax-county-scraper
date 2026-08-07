@@ -1,0 +1,679 @@
+{
+    "actorSpecification": 1,
+    "fields": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "title": "US county parcel record",
+        "description": "One item is either an answer about a parcel or a refusal to answer, and the two are the same kind of object on purpose: an agent can act on a structured refusal and can only give up on an error. Tell them apart by `result`, which is present only on a refusal. Both carry `jurisdiction` and `source`, so every item names who answered and what was contacted. A parcel identifier that does not exist in a county is neither: it returns no items, because that is a true answer rather than a failure.",
+        "properties": {
+            "parcel_id": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "description": "The identifier this county uses for the parcel. There is no national format and no per-state one, so this is whatever the county uses."
+            },
+            "jurisdiction": {
+                "type": [
+                    "object",
+                    "null"
+                ],
+                "description": "Which county answered. Present on every record including refusals, because an agent asking several counties at once receives one flat list and a record that cannot name its source is not attributable to anything.",
+                "properties": {
+                    "county": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "County name.",
+                        "enum": [
+                            "Cook",
+                            "Duval",
+                            "San Diego",
+                            "Travis"
+                        ]
+                    },
+                    "state": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Two-letter state code."
+                    },
+                    "fips": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Five-digit FIPS county code, read from the jurisdiction table rather than typed per adapter."
+                    }
+                }
+            },
+            "source": {
+                "type": [
+                    "object",
+                    "null"
+                ],
+                "description": "How the answer was obtained, and from where.",
+                "properties": {
+                    "mode": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "How this county is reached. The four counties are reached four different ways.",
+                        "enum": [
+                            "arcgis_rest",
+                            "bulk_index",
+                            "open_data_portal",
+                            "state_programme"
+                        ]
+                    },
+                    "endpoints": {
+                        "type": "array",
+                        "description": "Every URL that contributed to this record, in full. An array and not a single string: one Cook parcel takes six requests across five datasets, and naming one of them would be a false attribution. Empty on a refusal that happened before anything was asked, because \"nobody was contacted\" is an answer and an absent field is not.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "retrieved_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "When the request was made, ISO 8601. Absent on answers served from a pre-built index."
+                    },
+                    "live": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ],
+                        "description": "Whether a source was contacted for this answer. False means it came from an index."
+                    }
+                }
+            },
+            "result_set": {
+                "type": [
+                    "object",
+                    "null"
+                ],
+                "description": "How much of the match is being shown. One address can name a building rather than a parcel: a Jacksonville condominium tower matched 241 parcels, one per unit. \"241 matched, you have 5\" is a fact the caller has to have.",
+                "properties": {
+                    "matched": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "How many records the source matched."
+                    },
+                    "returned": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "How many are in this response."
+                    },
+                    "envelope_degrees": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "Half-width of the search box around the geocoded point, in degrees, where the route went through a geocoder."
+                    }
+                }
+            },
+            "as_of": {
+                "type": [
+                    "object",
+                    "null"
+                ],
+                "description": "How old this answer is, and what that date is a date of. The basis matters more than the value: an assessment year and a file publication date are not comparable, and one county publishes no date of any kind.",
+                "properties": {
+                    "basis": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "What as_of.value measures. `unknown` is a legitimate value, and it is worse than stale, because stale can at least be flagged as stale.",
+                        "enum": [
+                            "assessment_year",
+                            "data_last_edit",
+                            "file_published",
+                            "unknown"
+                        ]
+                    },
+                    "value": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The date or year itself, where the source publishes one."
+                    }
+                }
+            },
+            "owner": {
+                "type": [
+                    "object",
+                    "null"
+                ],
+                "description": "Owner of record. Empty names with a flag is not a missing parcel: where a source marks a record confidential, or where two publishers of the same data disagree in public about whether the name may be online, the parcel comes back complete and the name is withheld with the reason attached.",
+                "properties": {
+                    "names": {
+                        "type": "array",
+                        "description": "Owners of record, one entry per name the source publishes.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "mailing_address": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Owner mailing address, where published and not withheld."
+                    }
+                }
+            },
+            "situs_address": {
+                "type": [
+                    "object",
+                    "null"
+                ],
+                "description": "The address of the property itself, split the way the sources store it.",
+                "properties": {
+                    "full": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The address as one line."
+                    },
+                    "number": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "House number."
+                    },
+                    "street": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Street name with its suffix, where the source stores them together."
+                    },
+                    "unit": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Unit or suite."
+                    },
+                    "city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "City or community."
+                    },
+                    "state": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Two-letter state code."
+                    },
+                    "zip": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Postal code as the source publishes it."
+                    }
+                }
+            },
+            "valuation": {
+                "type": [
+                    "object",
+                    "null"
+                ],
+                "description": "What the assessor says the property is worth, as a list rather than a number. Collapsing the list throws away the part that explains it.",
+                "properties": {
+                    "year": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Assessment year these figures belong to."
+                    },
+                    "currency": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Currency of every amount below."
+                    },
+                    "amounts": {
+                        "type": "array",
+                        "description": "Every figure the source publishes for this parcel and year, each labelled by basis and stage.",
+                        "items": {
+                            "type": "object",
+                            "description": "One money amount, labelled on both axes. Neither label is optional: Florida publishes five figures for one parcel that differ by basis with the stage constant, and Cook publishes three that differ by stage with the basis constant. A number labelled on one axis holds one of those counties and loses the other.",
+                            "properties": {
+                                "basis": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "What is being valued, and under which state rule. There is no generic \"assessed value\" because the four counties mean four different things by it.",
+                                    "enum": [
+                                        "ca_improvement",
+                                        "ca_land",
+                                        "ca_prop13_factored",
+                                        "fl_assessed_nonschool",
+                                        "fl_assessed_school",
+                                        "fl_just_value",
+                                        "fl_land_value",
+                                        "fl_taxable_nonschool",
+                                        "fl_taxable_school",
+                                        "il_fractional_assessed",
+                                        "il_fractional_building",
+                                        "il_fractional_land",
+                                        "tx_appraised",
+                                        "tx_assessed_capped",
+                                        "tx_market"
+                                    ]
+                                },
+                                "stage": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "Where in the assessment and appeal cycle the figure was taken.",
+                                    "enum": [
+                                        "board_of_review",
+                                        "certified",
+                                        "final",
+                                        "mailed",
+                                        "pending",
+                                        "unknown"
+                                    ]
+                                },
+                                "amount": {
+                                    "type": [
+                                        "number",
+                                        "null"
+                                    ],
+                                    "description": "The figure itself, in valuation.currency."
+                                }
+                            }
+                        }
+                    },
+                    "headline_basis": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Which basis to quote when only one figure can be shown.",
+                        "enum": [
+                            "ca_improvement",
+                            "ca_land",
+                            "ca_prop13_factored",
+                            "fl_assessed_nonschool",
+                            "fl_assessed_school",
+                            "fl_just_value",
+                            "fl_land_value",
+                            "fl_taxable_nonschool",
+                            "fl_taxable_school",
+                            "il_fractional_assessed",
+                            "il_fractional_building",
+                            "il_fractional_land",
+                            "tx_appraised",
+                            "tx_assessed_capped",
+                            "tx_market"
+                        ]
+                    },
+                    "headline_stage": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Which stage to quote when only one figure can be shown.",
+                        "enum": [
+                            "board_of_review",
+                            "certified",
+                            "final",
+                            "mailed",
+                            "pending",
+                            "unknown"
+                        ]
+                    }
+                }
+            },
+            "characteristics": {
+                "type": [
+                    "object",
+                    "null"
+                ],
+                "description": "Physical description of the property. The first six keys are normalized across all counties; the rest are published by some counties and not others, and are absent rather than null where a county does not have them. Null for Travis on every record: the certified export carries no building file in the part the index is built from.",
+                "properties": {
+                    "living_area_sqft": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "Heated or finished living area in square feet."
+                    },
+                    "lot_acres": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "Lot size in acres, converted where the source publishes square feet."
+                    },
+                    "year_built": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Year of construction."
+                    },
+                    "bedrooms": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "Bedroom count."
+                    },
+                    "bathrooms": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "Bathroom count in halves. Three counties store this three different ways and all of them arrive here as a number of bathrooms."
+                    },
+                    "units": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Residential unit count on the parcel."
+                    },
+                    "building_records": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "How many improvement records back this block. Above one, the block describes one of them and the multiple_buildings flag is set."
+                    },
+                    "building_area_sqft": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "description": "Total building area, where the source separates it from living area."
+                    },
+                    "rooms": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Total room count."
+                    },
+                    "building_type": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The building type code as the source publishes it."
+                    },
+                    "land_lines": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "How many land lines the parcel carries in the source."
+                    },
+                    "owner_occupied": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ],
+                        "description": "Whether the source marks the parcel owner-occupied."
+                    }
+                },
+                "additionalProperties": true
+            },
+            "sales": {
+                "type": "array",
+                "description": "Recorded transfers, most recent first where the source orders them.",
+                "items": {
+                    "type": "object",
+                    "description": "One recorded transfer.",
+                    "properties": {
+                        "date": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "description": "Recording date, ISO 8601."
+                        },
+                        "price": {
+                            "type": [
+                                "number",
+                                "null"
+                            ],
+                            "description": "Recorded price. Null in Texas, which is a non-disclosure state and does not publish it."
+                        },
+                        "nominal": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "description": "True where the price is a token amount rather than a market price, as trustee and family transfers commonly are."
+                        },
+                        "buyer": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "description": "Grantee, where published."
+                        },
+                        "seller": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "description": "Grantor, where published."
+                        },
+                        "deed_type": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "description": "The deed type code as the source publishes it."
+                        },
+                        "document_number": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "description": "Recorder document number."
+                        },
+                        "qualified": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "description": "Whether the source considers the sale a market transaction between unrelated parties."
+                        }
+                    }
+                }
+            },
+            "flags": {
+                "type": "array",
+                "description": "Everything the caller has to know to avoid being wrong, from a closed vocabulary. A flag outside this list throws while the record is being built, so a warning cannot be silently absent because of a typo. Each flag generates exactly one sentence, and those sentences arrive in `notes` in the same order.",
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "address_match_approximate",
+                        "address_resolved_to_building",
+                        "answered_from_index",
+                        "co_located_parcels",
+                        "co_owners_present",
+                        "fell_back_to_prior_year",
+                        "index_may_lag_supplements",
+                        "measurement_clamped",
+                        "multiple_buildings",
+                        "not_assessable",
+                        "owner_name_contested",
+                        "owner_withheld",
+                        "owner_withheld_by_policy",
+                        "parcel_not_current",
+                        "partial_result",
+                        "resolved_via_external_geocoder",
+                        "results_truncated",
+                        "sale_parties_unknown",
+                        "sale_price_nominal",
+                        "sale_price_not_published",
+                        "source_freshness_unknown",
+                        "values_pending_for_year",
+                        "values_under_appeal"
+                    ]
+                }
+            },
+            "notes": {
+                "type": "array",
+                "description": "One sentence per flag, generated from the flag rather than written per record, so the two cannot disagree.",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "result": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "description": "Present only on a refusal, and it is the reason in one token. Absent on an answer.",
+                "enum": [
+                    "address_not_found",
+                    "address_not_geocoded",
+                    "index_not_built",
+                    "source_failure",
+                    "unparsed_address",
+                    "unparsed_parcel_id",
+                    "unsupported_lookup"
+                ]
+            },
+            "requested": {
+                "type": [
+                    "object",
+                    "null"
+                ],
+                "description": "What was asked, echoed back on a refusal so the caller can tell which of several parallel lookups this one was.",
+                "properties": {
+                    "lookup_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Whether the query was a parcel identifier or an address.",
+                        "enum": [
+                            "parcel_id",
+                            "address"
+                        ]
+                    },
+                    "query": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The query as it was received."
+                    }
+                }
+            },
+            "reason": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "description": "Why the answer could not be given, in a sentence. A refusal with no reason throws while it is being built."
+            },
+            "remedy": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "description": "What the caller can do about it, where there is something to do. This is the field an agent can act on."
+            },
+            "failure": {
+                "type": [
+                    "object",
+                    "null"
+                ],
+                "description": "Present where a source was contacted and the request did not end usefully.",
+                "properties": {
+                    "outcome": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "How the request ended."
+                    },
+                    "detail": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "What the source said, where it said anything."
+                    },
+                    "elapsed_ms": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "How long the caller waited before the failure. A deterministic slow failure is worth knowing about: one of these sources takes 56 seconds to report a client error it invented."
+                    }
+                }
+            },
+            "supported_lookups": {
+                "type": [
+                    "array",
+                    "null"
+                ],
+                "description": "On an unsupported lookup, what this county does support. A county that cannot answer this question can usually answer another one.",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "search": {
+                "type": [
+                    "object",
+                    "null"
+                ],
+                "description": "How far a spatial search got before giving up, where the route ran through a geocoder."
+            }
+        },
+        "additionalProperties": true
+    },
+    "views": {
+        "overview": {
+            "title": "Overview",
+            "transformation": {
+                "fields": [
+                    "result",
+                    "parcel_id",
+                    "jurisdiction",
+                    "situs_address",
+                    "valuation",
+                    "flags",
+                    "notes",
+                    "reason"
+                ]
+            },
+            "display": {
+                "component": "table"
+            }
+        }
+    }
+}

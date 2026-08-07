@@ -144,3 +144,49 @@ describe('splitAddress', () => {
         expect(splitAddress('')).toBeNull();
     });
 });
+
+describe('buildRecord vocabularies beyond the flags', () => {
+    // The flags threw from the first commit. basis, stage, as_of.basis and source.mode were
+    // used by convention across four adapters and checked nowhere, which is the arrangement
+    // that let the refusal path drift. Declaring the dataset schema is what surfaced it.
+    it('refuses a valuation basis that is not in the vocabulary', () => {
+        expect(() =>
+            buildRecord({
+                ...minimal,
+                valuation: { amounts: [{ basis: 'assessed_value', stage: 'final', amount: 1 }] },
+            }),
+        ).toThrow(/unknown basis/);
+    });
+
+    it('refuses a stage that is not in the vocabulary', () => {
+        expect(() =>
+            buildRecord({
+                ...minimal,
+                valuation: { amounts: [{ basis: 'ca_land', stage: 'appealed', amount: 1 }] },
+            }),
+        ).toThrow(/unknown stage/);
+    });
+
+    it('checks the headline labels too, which are the ones a caller quotes', () => {
+        expect(() => buildRecord({ ...minimal, valuation: { amounts: [], headline_basis: 'market_value' } })).toThrow(
+            /unknown basis/,
+        );
+    });
+
+    it('refuses an as_of basis and a source mode outside their vocabularies', () => {
+        expect(() => buildRecord({ ...minimal, asOf: { basis: 'recently', value: null } })).toThrow(
+            /unknown as_of.basis/,
+        );
+        expect(() => buildRecord({ ...minimal, source: { ...minimal.source, mode: 'scraped' } })).toThrow(
+            /unknown source.mode/,
+        );
+    });
+
+    it('lets a missing label through, because absent is a gap and wrong is a lie', () => {
+        const record = buildRecord({
+            ...minimal,
+            valuation: { amounts: [{ basis: null, stage: null, amount: null }] },
+        });
+        expect(record.valuation.amounts).toHaveLength(1);
+    });
+});

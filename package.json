@@ -20,6 +20,7 @@
     "scripts": {
         "start": "node ./src/main.js",
         "probe": "node ./bin/probe.js",
+        "schema": "node ./bin/build-dataset-schema.js",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "lint": "eslint",
