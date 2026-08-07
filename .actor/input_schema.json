@@ -29,14 +29,14 @@
         "query": {
             "title": "Parcel identifier or address",
             "type": "string",
-            "description": "The parcel identifier or the street address.\n\nThere is no national parcel identifier and no per-state one either, so this field cannot be validated beyond 'not empty'. Real examples, one per county: San Diego 3532803300 (ten digits), Duval 0991354355R (ten digits and a letter), Cook 29352110190000 (fourteen digits), Travis 100008 (padded to twelve in the export, type it without the padding). Two counties in the same state do not necessarily agree: another Florida county writes 07702-000-000.\n\nFor an address, give as much as you have, for example '7519 Caravaca Ct, Jacksonville, FL 32244'. An address that names a building rather than a single parcel, such as a condominium tower, returns every unit and says so in the flags.",
+            "description": "The parcel identifier or the street address. No format is enforced: identifiers differ per county and cannot be validated beyond 'not empty'. One real example each: San Diego 3532803300, Duval 0991354355R, Cook 29352110190000, Travis 100008 (unpadded; the export pads it to twelve). For an address give as much as you have, for example '7519 Caravaca Ct, Jacksonville, FL 32244'. An address naming a building rather than a parcel, such as a condominium tower, returns every unit and flags it.",
             "editor": "textfield",
             "prefill": "3532803300"
         },
         "allowContestedOwnerNames": {
             "title": "Include owner names whose publication is disputed",
             "type": "boolean",
-            "description": "Whether to return owner names for a county where two publishers of the same parcel data disagree in public about whether the name may be online.\n\nOne county here is in that position. In San Diego the county assessor's own service returns the owner name to anyone who asks, unauthenticated, while the joint city and county GIS agency states that California AB1785 bars it from publishing owner name and address information in any publicly accessible online location. This Actor does not settle which one governs.\n\nLeft false, which is the default, the parcel comes back complete with the owner name and mailing address withheld and the flag owner_withheld_by_policy explaining why. Set it to true if you have a reason to receive that name; the record then carries owner_name_contested instead, so the dispute travels with the data rather than being lost at the first hop. Counties whose owner names are published without dispute are unaffected either way.",
+            "description": "Whether to return owner names where two publishers of the same data disagree about putting them online. Affects San Diego only. Left false, the parcel comes back complete with the name and mailing address withheld and flagged owner_withheld_by_policy. Set true and the name is returned flagged owner_name_contested, so the dispute travels with the data. The disagreement: the assessor serves the name unauthenticated, the county GIS agency says California AB1785 bars publishing it online.",
             "editor": "checkbox",
             "default": false
         },
