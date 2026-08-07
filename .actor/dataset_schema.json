@@ -145,9 +145,10 @@
                     "value": {
                         "type": [
                             "string",
+                            "integer",
                             "null"
                         ],
-                        "description": "The date or year itself, where the source publishes one."
+                        "description": "The date or year itself, where the source publishes one. An integer year where basis is assessment_year, an ISO 8601 timestamp where it is file_published or data_last_edit, and null where it is unknown."
                     }
                 }
             },
@@ -502,10 +503,10 @@
                         },
                         "qualified": {
                             "type": [
-                                "boolean",
+                                "string",
                                 "null"
                             ],
-                            "description": "Whether the source considers the sale a market transaction between unrelated parties."
+                            "description": "The qualification code the source publishes for this sale, saying whether it considers the transfer a market sale between unrelated parties. Florida publishes one; the other three counties do not, and the field is null there."
                         }
                     }
                 }

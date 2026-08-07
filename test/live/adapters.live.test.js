@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { lookup } from '../../src/router.js';
+// Not src/router.js directly: this wrapper adds the dataset schema check the
+// platform applies on pushData, which is the check that was missing when a Cook
+// record with an integer year killed a run under build 0.1.5.
+import { lookup } from '../declared-schema.js';
 
 /**
  * Live tests. These hit the real endpoints, so they are slow, they need the network, and

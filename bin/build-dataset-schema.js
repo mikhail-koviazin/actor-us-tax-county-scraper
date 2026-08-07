@@ -129,9 +129,13 @@ const sale = {
         seller: nullable('string', 'Grantor, where published.'),
         deed_type: nullable('string', 'The deed type code as the source publishes it.'),
         document_number: nullable('string', 'Recorder document number.'),
+        // Named like a boolean and carrying a code, which is the shape of mistake this
+        // Actor exists to flatten out of the sources and had quietly reproduced. Declaring
+        // it is what surfaced it. Only Florida publishes one, so the field is null in three
+        // counties out of four and renaming it is deferred rather than done under a deadline.
         qualified: nullable(
-            'boolean',
-            'Whether the source considers the sale a market transaction between unrelated parties.',
+            'string',
+            'The qualification code the source publishes for this sale, saying whether it considers the transfer a market sale between unrelated parties. Florida publishes one; the other three counties do not, and the field is null there.',
         ),
     },
 };
@@ -177,7 +181,15 @@ const schema = {
                             enum: values(AsOfBasis),
                         },
                     ),
-                    value: nullable('string', 'The date or year itself, where the source publishes one.'),
+                    // The type follows the basis and there is no honest way around it: a
+                    // year is a number and a publication timestamp is a string. Declaring
+                    // one of them and shipping the other is what a schema is for catching,
+                    // and this is the field it caught.
+                    value: {
+                        type: ['string', 'integer', 'null'],
+                        description:
+                            'The date or year itself, where the source publishes one. An integer year where basis is assessment_year, an ISO 8601 timestamp where it is file_published or data_last_edit, and null where it is unknown.',
+                    },
                 },
             },
             owner: {
