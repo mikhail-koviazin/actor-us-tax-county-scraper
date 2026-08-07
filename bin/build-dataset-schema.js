@@ -109,7 +109,10 @@ const characteristics = {
         land_lines: nullable('integer', 'How many land lines the parcel carries in the source.'),
         owner_occupied: nullable('boolean', 'Whether the source marks the parcel owner-occupied.'),
     },
-    additionalProperties: true,
+    // Closed for the same reason as a sale, and this is the block where it mattered: Cook
+    // published `building_records` here and Duval published `buildings`, one concept under
+    // two names, for as long as nothing described the block.
+    additionalProperties: false,
 };
 
 const sale = {
@@ -127,8 +130,28 @@ const sale = {
         ),
         buyer: nullable('string', 'Grantee, where published.'),
         seller: nullable('string', 'Grantor, where published.'),
+        date_precision: nullable(
+            'string',
+            'How much of the recording date the source actually published. A sale known only to the year is not a sale on the first of January, and this is the field that says which one you have.',
+            { enum: ['day', 'month', 'year'] },
+        ),
         deed_type: nullable('string', 'The deed type code as the source publishes it.'),
-        document_number: nullable('string', 'Recorder document number.'),
+        document: nullable(
+            'string',
+            'Recorder document number, or book and page joined where the source publishes those instead.',
+        ),
+        excluded_by_publisher: nullable(
+            'boolean',
+            'True where the source itself marks the sale as one it excludes from analysis, which is the publisher declining to stand behind it rather than a judgement made here.',
+        ),
+        multi_parcel_sale: nullable(
+            'integer',
+            'How many parcels the transaction covered, where the source says the sale was a multi-parcel one. A price on a multi-parcel sale is not the price of this parcel.',
+        ),
+        vacant_or_improved: nullable(
+            'string',
+            'The code Florida publishes for whether the parcel was vacant or improved at the time of the sale. A price for vacant land is not comparable to a price for the same parcel with a house on it.',
+        ),
         // Named like a boolean and carrying a code, which is the shape of mistake this
         // Actor exists to flatten out of the sources and had quietly reproduced. Declaring
         // it is what surfaced it. Only Florida publishes one, so the field is null in three
@@ -138,6 +161,10 @@ const sale = {
             'The qualification code the source publishes for this sale, saying whether it considers the transfer a market sale between unrelated parties. Florida publishes one; the other three counties do not, and the field is null there.',
         ),
     },
+    // Closed on purpose. An undeclared sale field is how `document` and `document_number`
+    // came to name one concept twice, and closing the object turns the next one into a
+    // failing live test instead of a second name nobody reads.
+    additionalProperties: false,
 };
 
 const schema = {

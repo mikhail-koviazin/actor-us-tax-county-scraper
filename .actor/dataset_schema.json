@@ -443,7 +443,7 @@
                         "description": "Whether the source marks the parcel owner-occupied."
                     }
                 },
-                "additionalProperties": true
+                "additionalProperties": false
             },
             "sales": {
                 "type": "array",
@@ -487,6 +487,18 @@
                             ],
                             "description": "Grantor, where published."
                         },
+                        "date_precision": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "description": "How much of the recording date the source actually published. A sale known only to the year is not a sale on the first of January, and this is the field that says which one you have.",
+                            "enum": [
+                                "day",
+                                "month",
+                                "year"
+                            ]
+                        },
                         "deed_type": {
                             "type": [
                                 "string",
@@ -494,12 +506,33 @@
                             ],
                             "description": "The deed type code as the source publishes it."
                         },
-                        "document_number": {
+                        "document": {
                             "type": [
                                 "string",
                                 "null"
                             ],
-                            "description": "Recorder document number."
+                            "description": "Recorder document number, or book and page joined where the source publishes those instead."
+                        },
+                        "excluded_by_publisher": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "description": "True where the source itself marks the sale as one it excludes from analysis, which is the publisher declining to stand behind it rather than a judgement made here."
+                        },
+                        "multi_parcel_sale": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "description": "How many parcels the transaction covered, where the source says the sale was a multi-parcel one. A price on a multi-parcel sale is not the price of this parcel."
+                        },
+                        "vacant_or_improved": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "description": "The code Florida publishes for whether the parcel was vacant or improved at the time of the sale. A price for vacant land is not comparable to a price for the same parcel with a house on it."
                         },
                         "qualified": {
                             "type": [
@@ -508,7 +541,8 @@
                             ],
                             "description": "The qualification code the source publishes for this sale, saying whether it considers the transfer a market sale between unrelated parties. Florida publishes one; the other three counties do not, and the field is null there."
                         }
-                    }
+                    },
+                    "additionalProperties": false
                 }
             },
             "flags": {

@@ -126,7 +126,11 @@ const toRecord = (attrs, { endpoint, retrievedAt, extraFlags = [] }) => {
             buyer: null,
             seller: null,
             deed_type: str(a.DOCTYPE),
-            document_number: str(a.DOCNMBR),
+            // `document` and not `document_number`: the other three counties call it
+            // `document`, and this adapter was the only one out of step. Two names for one
+            // concept inside one normalized record is the defect this Actor removes from
+            // sources, and declaring the output is what made it visible.
+            document: str(a.DOCNMBR),
             qualified: null,
         });
         // California does not publish the consideration in this layer at all, so the
