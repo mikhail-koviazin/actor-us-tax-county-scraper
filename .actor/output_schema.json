@@ -1,0 +1,13 @@
+{
+    "actorOutputSchemaVersion": 1,
+    "title": "Parcel records",
+    "description": "Every answer this Actor produces goes to the default dataset, one item per parcel. A refusal is an item too: it carries the same jurisdiction and source keys as an answer, so a caller fanning out across counties can read the whole result set the same way. The shape of an item and its five controlled vocabularies are declared in the dataset schema.",
+    "properties": {
+        "records": {
+            "type": "string",
+            "title": "Parcel records",
+            "description": "The dataset holding this run's answers and refusals.",
+            "template": "{{links.apiDefaultDatasetUrl}}/items?clean=true"
+        }
+    }
+}
