@@ -32,6 +32,11 @@ Read `README.md` first. The output contract lives in the companion research repo
 
 - Installing packages, `apify push`, Dockerfile changes, deleting datasets or key-value stores, anything that changes the Store listing.
 
+## Decided, do not redo
+
+- This file replaced the 27,905 byte `apify-cli` template on 2026-08-13. The template is written for Crawlee scrapers and most of it does not apply here. Its Store listing README advice is still worth reading once, in the history of the commit that replaced it.
+- The template's `generatedBy` property in `meta` in `.actor/actor.json` is deliberately left out. Checked live on 2026-08-12: the property appears zero times in the `actor.json` schema (`meta` is declared as a free-form object) and zero times in `docs.apify.com/llms-full.txt`. It exists only in the template text, as telemetry for Apify. Do not add it.
+
 ## Store listing
 
 - `README.md` is the Actor's public page on Apify Store, not developer documentation.
