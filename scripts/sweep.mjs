@@ -66,6 +66,11 @@ const wait = (ms) =>
  * Sampling runs before any lookup does, so one connection timeout here throws away an hour of
  * work that had not started yet. Retried with a backoff, and 429 is waited out rather than
  * hammered: a sweep this size is a guest on somebody else's public service.
+ *
+ * The body is parsed before the status is trusted, which is the rule `src/http.js` has had
+ * since Florida was first probed and which this script did not have until it fell over: the
+ * statewide layer answers HTTP 200 carrying `{"error":{"code":400}}`, and reaching for
+ * `features` on that throws a TypeError three frames away from the thing that went wrong.
  */
 const getJson = async (url, { attempts = 4, timeout = 60_000 } = {}) => {
     let last;
@@ -81,7 +86,11 @@ const getJson = async (url, { attempts = 4, timeout = 60_000 } = {}) => {
                 continue;
             }
             if (!r.ok) throw new Error(`${r.status} ${url.slice(0, 120)}`);
-            return r.json();
+            const body = await r.json();
+            if (body?.error) {
+                throw new Error(`body carries error ${body.error.code}: ${body.error.message ?? ''}`);
+            }
+            return body;
         } catch (e) {
             last = e;
             await wait(2_000 * (i + 1));
@@ -118,7 +127,7 @@ async function sampleSanDiego(n) {
         const r = await getJson(
             `${base}?where=${encodeURIComponent(`OBJECTID IN (${batch.join(',')})`)}&outFields=APN&returnGeometry=false&f=json`,
         );
-        out.push(...r.features.map((f) => f.attributes.APN).filter(Boolean));
+        out.push(...(r.features ?? []).map((f) => f.attributes.APN).filter(Boolean));
     }
     return out;
 }
@@ -136,7 +145,7 @@ async function sampleDuval(n) {
         const r = await getJson(
             `${base}?where=${encodeURIComponent(`OBJECTID IN (${batch.join(',')})`)}&outFields=PARCEL_ID&returnGeometry=false&f=json`,
         );
-        out.push(...r.features.map((f) => f.attributes.PARCEL_ID).filter(Boolean));
+        out.push(...(r.features ?? []).map((f) => f.attributes.PARCEL_ID).filter(Boolean));
     }
     return out;
 }
