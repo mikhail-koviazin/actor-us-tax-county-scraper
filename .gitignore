@@ -12,3 +12,8 @@ storage
 
 # The Travis index: 368 MB of derived data, rebuilt by bin/build-travis-index.js
 .travis-index
+
+# Sweep artifacts: the identifier pools are cached to avoid re-downloading a layer, and the
+# reports belong in the research repository under data/, not here.
+.sweep-cache
+sweep-report.json

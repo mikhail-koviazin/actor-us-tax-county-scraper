@@ -10,7 +10,9 @@ export default [
     {
         // The scripts in bin/ and scripts/ are command line tools. Printing to stdout is their job,
         // and routing that through the Actor logger would defeat the point of having them.
+        // They are also development tooling that never ships inside the image the platform runs,
+        // so reaching for a devDependency is correct there and only there.
         files: ['bin/**/*.js', 'scripts/**/*.mjs'],
-        rules: { 'no-console': 'off' },
+        rules: { 'no-console': 'off', 'import-x/no-extraneous-dependencies': ['error', { devDependencies: true }] },
     },
 ];

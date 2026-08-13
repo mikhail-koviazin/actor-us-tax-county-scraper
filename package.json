@@ -22,6 +22,7 @@
         "start": "node ./src/main.js",
         "probe": "node ./bin/probe.js",
         "schema": "node ./bin/build-dataset-schema.js",
+        "sweep": "node ./scripts/sweep.mjs",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "lint": "eslint",
