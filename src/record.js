@@ -248,6 +248,16 @@ export const buildRecord = ({
         checkVocabulary('stage', amount.stage);
     }
 
+    // The headline is the label that says which single figure to quote when only one can be
+    // shown, so a headline naming an amount that is not in the list is worse than no headline:
+    // it sends the caller to a number that does not exist. Cook shipped exactly that for every
+    // parcel whose current year had only the mailed values, found by sampling 25 parcels at
+    // random on 2026-08-13 and not by any of the four reference parcels this was built on.
+    const { headline_basis: hb, headline_stage: hs, amounts = [] } = valuation ?? {};
+    if ((hb || hs) && !amounts.some((a) => a.basis === hb && a.stage === hs)) {
+        throw new Error(`headline ${hb}/${hs} is not among the amounts`);
+    }
+
     return {
         parcel_id: parcelId,
         jurisdiction: place(jurisdiction),

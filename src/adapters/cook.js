@@ -95,14 +95,25 @@ const buildValuation = (row) => {
             if (value !== null) amounts.push({ basis, stage, amount: value });
         }
     }
+    // The headline names which single figure to quote, so it has to name one that is in the
+    // record. Early in a year Cook publishes the mailed values alone and the appeal stages
+    // arrive later; naming board of review then pointed the caller at an amount that was not
+    // there. Take the last stage that actually carries an assessed total.
+    const headlineStage =
+        STAGES.map((s) => s.stage)
+            .filter((stage) =>
+                amounts.some((a) => a.stage === stage && a.basis === ValuationBasis.IL_FRACTIONAL_ASSESSED),
+            )
+            .at(-1) ?? null;
+
     return {
         year: num(row.year),
         currency: 'USD',
         // Illinois assessed values are a fraction of market value, 10% for most
         // residential property, so 14550 is not a $14,550 house.
         amounts,
-        headline_basis: ValuationBasis.IL_FRACTIONAL_ASSESSED,
-        headline_stage: Stage.BOARD_OF_REVIEW,
+        headline_basis: headlineStage === null ? null : ValuationBasis.IL_FRACTIONAL_ASSESSED,
+        headline_stage: headlineStage,
     };
 };
 

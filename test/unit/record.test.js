@@ -173,6 +173,31 @@ describe('buildRecord vocabularies beyond the flags', () => {
         );
     });
 
+    it('refuses a headline that names an amount the record does not carry', () => {
+        expect(() =>
+            buildRecord({
+                ...minimal,
+                valuation: {
+                    amounts: [{ basis: 'il_fractional_assessed', stage: 'mailed', amount: 58460 }],
+                    headline_basis: 'il_fractional_assessed',
+                    headline_stage: 'board_of_review',
+                },
+            }),
+        ).toThrow(/not among the amounts/);
+    });
+
+    it('takes a headline that does name one of them', () => {
+        const rec = buildRecord({
+            ...minimal,
+            valuation: {
+                amounts: [{ basis: 'il_fractional_assessed', stage: 'mailed', amount: 58460 }],
+                headline_basis: 'il_fractional_assessed',
+                headline_stage: 'mailed',
+            },
+        });
+        expect(rec.valuation.headline_stage).toBe('mailed');
+    });
+
     it('refuses an as_of basis and a source mode outside their vocabularies', () => {
         expect(() => buildRecord({ ...minimal, asOf: { basis: 'recently', value: null } })).toThrow(
             /unknown as_of.basis/,

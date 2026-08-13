@@ -51,7 +51,7 @@ npm run probe -- --capabilities
 node bin/build-travis-index.js     # 129 MB fetched, 493,246 properties, about 25 s
 ```
 
-`npm test` runs 94 unit tests, which need no network. `npm run test:live` runs 26 tests against the real counties, which is how a change on their side becomes visible here.
+`npm test` runs 96 unit tests, which need no network. `npm run test:live` runs 26 tests against the real counties, which is how a change on their side becomes visible here.
 
 ## Input
 
