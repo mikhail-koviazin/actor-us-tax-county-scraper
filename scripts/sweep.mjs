@@ -30,7 +30,17 @@ const batchAt = process.argv.indexOf('--batch');
 const BATCH = batchAt >= 0 ? Number(process.argv[batchAt + 1]) : 200;
 const CACHE = '.sweep-cache';
 const ROUNDTRIP = process.argv.includes('--addr');
-const CONCURRENCY = 4;
+const concAt = process.argv.indexOf('--conc');
+/**
+ * One at a time by default, and the counties run one after another too.
+ *
+ * Four in parallel pushed 2,499 San Diego lookups through in twenty minutes, and 144 of them
+ * came back as `source_failure`, all of them in the last third of the run. Every one of those
+ * identifiers answered on a calm retry, one at a time, so the failures were the sweep's own
+ * load and nothing about the county's data. A measurement that changes the thing it measures
+ * is not a measurement, and a public county service is not ours to lean on.
+ */
+const CONCURRENCY = concAt >= 0 ? Number(process.argv[concAt + 1]) : 1;
 
 const schema = JSON.parse(await readFile(new URL('../.actor/dataset_schema.json', import.meta.url), 'utf8'));
 const validate = new Ajv({ strict: false, allErrors: true }).compile(schema.fields);
@@ -127,19 +137,28 @@ async function sampleDuval(n) {
     return out;
 }
 
+/**
+ * Cook has no way to hand over every identifier at once the way an ArcGIS layer does, and
+ * asking for one pin per request costs a request per parcel sampled. So: a dozen blocks read
+ * from random offsets in pin order, and the sample drawn out of those. Not uniform over the
+ * county the way the other three are, and stratified enough that no ward, no township and no
+ * range of pins can dominate it, at twelve requests instead of thousands.
+ */
 async function sampleCook(n) {
     const host = 'https://datacatalog.cookcountyil.gov/resource/pabr-t5kh.json';
     const [{ count }] = await getJson(`${host}?%24select=count(*)%20as%20count`);
     const total = Number(count);
-    const offsets = pick(
-        Array.from({ length: Math.min(total, 400000) }, (_, i) => i),
-        n,
-    );
-    const rows = await pool(offsets, async (off) => {
-        const r = await getJson(`${host}?%24select=pin&%24order=pin&%24limit=1&%24offset=${off}`);
-        return r[0]?.pin ?? null;
-    });
-    return rows.filter(Boolean);
+    const blocks = 12;
+    const perBlock = Math.ceil(n / blocks);
+    const out = [];
+    for (let b = 0; b < blocks; b += 1) {
+        const offset = Math.floor(Math.random() * Math.max(1, total - perBlock * 4));
+        const rows = await getJson(`${host}?%24select=pin&%24order=pin&%24limit=${perBlock * 4}&%24offset=${offset}`, {
+            timeout: 120_000,
+        });
+        out.push(...pick(rows.map((r) => r.pin).filter(Boolean), perBlock));
+    }
+    return out.slice(0, n);
 }
 
 async function sampleTravis(n) {
