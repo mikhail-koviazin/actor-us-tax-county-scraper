@@ -94,6 +94,10 @@ const addrShardRows = async (shard) => {
  *
  * This is not an error. The jurisdiction is real, the route is real, and the only thing
  * missing is a build the operator has not run. Saying so is actionable; a 500 is not.
+ *
+ * The platform image ships no index, so on a run this refusal is the only answer this
+ * county gives. The remedy therefore has to start from a repository the caller does not
+ * have, not from a shell the caller does not have either.
  */
 const noIndex = (lookupBy, query) =>
     buildRefusal({
@@ -102,8 +106,8 @@ const noIndex = (lookupBy, query) =>
         lookupBy,
         query,
         mode,
-        reason: 'This county publishes no endpoint that answers a question about one parcel, so answers come from an index built from the certified export. No index has been built yet.',
-        remedy: 'Run bin/build-travis-index.js. It fetches 129 MB of a 531 MB archive and takes under a minute.',
+        reason: 'This county publishes no endpoint that answers a question about one parcel, so answers come from an index built from the certified export. No index has been built yet, and the platform build ships none.',
+        remedy: 'Clone the repository and run bin/build-travis-index.js. It fetches 129 MB of a 531 MB archive and takes under a minute.',
     });
 
 const toRecord = (property, index, { extraFlags = [], resultSet = null } = {}) => {

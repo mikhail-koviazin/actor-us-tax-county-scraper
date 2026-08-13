@@ -130,8 +130,8 @@ A refusal is an item too, carrying the same `jurisdiction` and `source` keys as 
     "jurisdiction": { "county": "Travis", "state": "TX", "fips": "48453" },
     "requested": { "lookup_by": "parcel_id", "query": "100008" },
     "source": { "mode": "bulk_index", "endpoints": [] },
-    "reason": "This county publishes no endpoint that answers a question about one parcel, so answers come from an index built from the certified export. No index has been built yet.",
-    "remedy": "Run bin/build-travis-index.js. It fetches 129 MB of a 531 MB archive and takes under a minute."
+    "reason": "This county publishes no endpoint that answers a question about one parcel, so answers come from an index built from the certified export. No index has been built yet, and the platform build ships none.",
+    "remedy": "Clone the repository and run bin/build-travis-index.js. It fetches 129 MB of a 531 MB archive and takes under a minute."
 }
 ```
 

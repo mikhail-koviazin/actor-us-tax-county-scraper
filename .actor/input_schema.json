@@ -6,14 +6,14 @@
         "jurisdiction": {
             "title": "County",
             "type": "string",
-            "description": "Which county to ask. There is no auto-detection: resolving a county from an address is a separate problem, and guessing it wrong returns a confident answer about the wrong property. Each county is reached a completely different way, which affects how fast the answer comes and how fresh it is.",
+            "description": "Which county to ask. There is no auto-detection: resolving a county from an address is a separate problem, and guessing it wrong returns a confident answer about the wrong property. Each county is reached a completely different way, which affects how fast the answer comes and how fresh it is. Travis is the exception on the platform: the index it answers from is built locally and the platform build ships none, so a Travis lookup returns the refusal index_not_built instead of data.",
             "editor": "select",
             "enum": ["san-diego-ca", "duval-fl", "cook-il", "travis-tx"],
             "enumTitles": [
-                "San Diego County, CA (live, about 1.5 s, no freshness signal at all)",
-                "Duval County, FL (live, about 2 s by parcel id, values are one assessment year behind)",
-                "Cook County, IL (live, about 3 s, data one day old, three assessment stages per year)",
-                "Travis County, TX (no live endpoint exists; answered from an index of the certified roll, freshest values of the four)"
+                "San Diego County, CA (live, 0.7 to 1.4 s, no freshness signal at all)",
+                "Duval County, FL (live, 0.4 to 15 s depending on the CDN edge, values are one assessment year behind)",
+                "Cook County, IL (live, 0.9 to 1.3 s over six parallel requests, data one day old, three assessment stages per year)",
+                "Travis County, TX (no live endpoint; the index it answers from is built locally, so on the platform this returns a refusal, not data)"
             ],
             "default": "san-diego-ca"
         },
