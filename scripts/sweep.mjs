@@ -31,6 +31,10 @@ const BATCH = batchAt >= 0 ? Number(process.argv[batchAt + 1]) : 200;
 const CACHE = '.sweep-cache';
 const ROUNDTRIP = process.argv.includes('--addr');
 const concAt = process.argv.indexOf('--conc');
+const onlyAt = process.argv.indexOf('--only');
+const ONLY = onlyAt >= 0 ? process.argv[onlyAt + 1] : null;
+const outAt = process.argv.indexOf('--out');
+const OUT = outAt >= 0 ? process.argv[outAt + 1] : 'sweep-report.json';
 /**
  * One at a time by default, and the counties run one after another too.
  *
@@ -281,7 +285,15 @@ const poolOfIds = async (jurisdiction, sampler, n) => {
 
 const report = {};
 
-for (const [jurisdiction, sampler] of Object.entries(SAMPLERS)) {
+/**
+ * One county at a time inside this process, and one request at a time inside a county. Run
+ * several counties beside each other by starting a process per county with --only: they are
+ * four different services, so nothing about that raises the load any one of them sees.
+ */
+const selected = Object.entries(SAMPLERS).filter(([j]) => !ONLY || j === ONLY);
+if (ONLY && !selected.length) throw new Error(`unknown jurisdiction: ${ONLY}`);
+
+for (const [jurisdiction, sampler] of selected) {
     const ids = await poolOfIds(jurisdiction, sampler, N);
     process.stderr.write(`${jurisdiction}: ${ids.length} identifiers, in batches of ${BATCH}\n`);
 
@@ -332,7 +344,7 @@ for (const [jurisdiction, sampler] of Object.entries(SAMPLERS)) {
             problems: countByKind(problems),
             examples: problems.slice(0, 8),
         };
-        await writeFile('sweep-report.json', JSON.stringify(report, null, 2));
+        await writeFile(OUT, JSON.stringify(report, null, 2));
         process.stderr.write(
             `${jurisdiction}: ${done}/${ids.length} ${JSON.stringify(countByKind(problems)) || '{}'}\n`,
         );
@@ -385,9 +397,9 @@ for (const [jurisdiction, sampler] of Object.entries(SAMPLERS)) {
         examples: problems.slice(0, 8),
         roundtrip: ROUNDTRIP ? roundtrip : undefined,
     };
-    await writeFile('sweep-report.json', JSON.stringify(report, null, 2));
+    await writeFile(OUT, JSON.stringify(report, null, 2));
     process.stderr.write(`${jurisdiction}: done ${JSON.stringify(report[jurisdiction].problems)}\n`);
 }
 
-await writeFile('sweep-report.json', JSON.stringify(report, null, 2));
+await writeFile(OUT, JSON.stringify(report, null, 2));
 console.log(JSON.stringify(report, null, 2));
