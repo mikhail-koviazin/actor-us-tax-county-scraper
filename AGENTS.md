@@ -27,6 +27,8 @@ Read `README.md` first. The output contract lives in the companion research repo
 - Use `apify/log`, not `console.log`: it censors tokens and keys.
 - `apify datasets ls` lists named datasets only. A run's dataset comes from `runs info <id> --json`.
 - The Apify Console keeps edits in a draft and needs an explicit Save, including icon upload. After any edit, reload the page and check that the "unsaved changes" banner is gone.
+- The Store page and the Console preview render the README from the snapshot baked into a build, not from the version source files. Editing `README.md` without `apify push` changes nothing on the page. Check a specific one at `/actors/<id>/info/readme?build=<number>`.
+- `apify push --no-prompt` is not a flag. The CLI prints help and exits 0, so the failure looks like a success. Use `apify push --wait-for-finish=300` and confirm with `apify builds ls --limit=3 --desc`.
 
 ## Ask first
 
