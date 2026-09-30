@@ -2,6 +2,8 @@
 
 This Actor answers one question about one parcel across US counties that publish the same data completely different ways. It is a router and a normalizer, not a scraper: no Crawlee, no browser, no HTML parsing anywhere. It calls documented public APIs and bulk files.
 
+**`AGENTS.md` is the only rules file, for every agent.** Claude Code reads it itself when no `CLAUDE.md` exists in the folder or above, so there is no `CLAUDE.md` here. A `CLAUDE.md` mentioned in older docs means this file; new references point to `AGENTS.md`.
+
 Read `README.md` first. The output contract lives in the companion research repo, `spec/actor-contract.md`.
 
 ## Working agreements
